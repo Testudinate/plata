@@ -176,7 +176,7 @@ GROUP BY 1;
 ---------------------------------------------------------------------------
 
 CREATE OR REPLACE TABLE RISK_DM.RAW.SYNTH_EPISODES
-COMMENT = 'Delinquency episodes: at most 3 per account, placed in disjoint segments of the statement sequence so they can never overlap by construction. Modelling episodes rather than a day-by-day Markov chain keeps the generator declarative (no recursion) while producing the same observable structure: dlq_first_dt, DPD roll-forward, cure and write-off.'
+COMMENT = 'Delinquency episodes: at most 3 per account, placed in disjoint segments of the statement sequence so they can never overlap by construction. EPISODE_START is the END_DATE of the statement following the missed payment - delinquency is recognised at the statement cut, which is what makes the documented "COR at inflow" join of Appendix C (dlq_first_dt = end_date) return rows.'
 AS
 WITH acc AS (
     SELECT a.account_seq, a.account_id, a.risk_beh_type, MAX(s.statement_num) AS n_stmts
@@ -219,7 +219,11 @@ placed AS (
 ),
 with_dates AS (
     SELECT p.account_seq, p.account_id, p.risk_beh_type, p.episode_num, p.hit_statement_num, p.u_sev,
-           DATEADD(day, 1, st.due_date) AS episode_start,
+           -- Просрочка признаётся на отсечке СЛЕДУЮЩЕЙ выписки после пропущенного
+           -- платежа. Тогда dlq_first_dt всегда совпадает с чьим-то end_date,
+           -- и join "COR at inflow" из Appendix C работает. При due_date + 1
+           -- он возвращал ровно 0 строк — проверено.
+           COALESCE(nxt.end_date, DATEADD(day, 1, st.due_date)) AS episode_start,
            -- 60% гасятся до 30 dpd, 20% до 60, 10% до 90, 10% уходят в списание.
            CASE WHEN p.u_sev < 60 THEN  5 + MOD(ABS(HASH(p.account_seq, p.episode_num, 'dur')), 26)
                 WHEN p.u_sev < 80 THEN 31 + MOD(ABS(HASH(p.account_seq, p.episode_num, 'dur')), 30)
@@ -229,6 +233,8 @@ with_dates AS (
     FROM placed p
     JOIN RISK_DM.RAW.SYNTH_STATEMENTS st
       ON st.account_seq = p.account_seq AND st.statement_num = p.hit_statement_num
+    LEFT JOIN RISK_DM.RAW.SYNTH_STATEMENTS nxt
+      ON nxt.account_seq = p.account_seq AND nxt.statement_num = p.hit_statement_num + 1
 )
 SELECT w.account_seq, w.account_id, w.episode_num, w.hit_statement_num, w.episode_start, w.is_wo,
        CASE WHEN w.is_wo THEN COALESCE(
@@ -394,55 +400,69 @@ FROM delta;
 
 ---------------------------------------------------------------------------
 -- 4.8 SYNTH_STM_COR — статементный срез.
--- День относится к тому статементу, чей END_DATE — первый на эту дату или
--- позже. Статемент 1 несёт нулевой COR по построению (срока платежа ещё
--- не было), поэтому фильтр statement_num >= 2 из Appendix C имеет смысл.
+-- День относится к тому статементу, чей END_DATE — первый на эту дату или позже.
+--
+-- COR_PRNP — ПОЛНЫЙ Gen3: 0-бакет + инфлоу + коллекшн. Сначала здесь стоял
+-- только cor (инфлоу + коллекшн), и 86% апрельских статементов получали ровно
+-- нулевой COR: у performing-счёта инфлоу нет по определению. Запрос из
+-- Appendix D отбрасывает строки с нулевым прогнозом, вместе с ними уходило 86%
+-- баланса, и COR% подскакивал с 10.6 до 61. Appendix B прямо говорит, что
+-- декомпозиции в этой таблице нет, — значит здесь и должен лежать полный тотал.
 ---------------------------------------------------------------------------
 
 CREATE OR REPLACE TABLE RISK_DM.RAW.SYNTH_STM_COR
-COMMENT = 'Statement-level aggregation of the daily panel. A day belongs to the statement whose END_DATE is the first one on or after it. Statement 1 carries zero COR by construction - no due date has passed yet (Appendix C), which is exactly what makes the statement_num >= 2 filter matter.'
+COMMENT = 'Statement-level aggregation of the daily panel. COR_PRNP is the TOTAL Gen3 provision delta over the cycle - 0-bucket growth plus inflow plus collection. Appendix B is explicit that this table has no inflow/collection decomposition, so the total is the only correct content here. Statement 1 carries zero COR by construction.'
 AS
 WITH daily_assigned AS (
     SELECT p.*, st.statement_num AS stm_num, st.end_date, st.util_month
     FROM RISK_DM.RAW.SYNTH_PANEL_COR p
     ASOF JOIN RISK_DM.RAW.SYNTH_STATEMENTS st
-        MATCH_CONDITION (p.report_date <= st.end_date)
-        ON p.account_seq = st.account_seq
+        MATCH_CONDITION (p.report_date <= st.end_date) ON p.account_seq = st.account_seq
 ),
 agg AS (
     SELECT account_seq, account_id, product_risks, utilization_date, util_month,
            stm_num AS statement_num, end_date,
-           SUM(cor)                   AS cor_prnp_raw,
+           SUM(cor_0_bucket + cor)    AS cor_prnp_raw,
            SUM(cor_total)             AS cor_prnp_gen2_raw,
+           SUM(cor_1p_fact)           AS cor_1p_raw,
+           SUM(cor_collection_fact)   AS cor_collection_raw,
            AVG(balance_net_prnp_gen3) AS avg_balance_prnp_net,
            AVG(balance_prnp)          AS avg_balance_prnp,
            MAX(IFF(prev_dlq_days = 0 AND dlq_days >= 1, 1, 0)) AS dpd1_flg,
            MAX(IFF(prev_dlq_days = 0 AND dlq_days >= 1, balance_prnp, 0)) AS dpd1_balance_prnp,
-           MAX(dlq_days)  AS max_dlq_days,
-           MIN(dlq_first_dt) AS dlq_first_dt
-    FROM daily_assigned
-    WHERE stm_num IS NOT NULL
+           MAX(dlq_days) AS max_dlq_days, MIN(dlq_first_dt) AS dlq_first_dt
+    FROM daily_assigned WHERE stm_num IS NOT NULL
     GROUP BY 1, 2, 3, 4, 5, 6, 7
 )
-SELECT account_seq, account_id, product_risks, utilization_date, util_month,
-       statement_num, end_date,
-       ROUND(IFF(statement_num = 1, 0, cor_prnp_raw), 2)      AS cor_prnp,
-       ROUND(IFF(statement_num = 1, 0, cor_prnp_gen2_raw), 2) AS cor_prnp_gen2,
-       ROUND(avg_balance_prnp_net, 2)                         AS avg_balance_prnp_net,
-       ROUND(avg_balance_prnp, 2)                             AS avg_balance_prnp,
-       IFF(statement_num = 1, 0, dpd1_flg)                    AS dpd1_flg,
-       ROUND(IFF(statement_num = 1, 0, dpd1_balance_prnp), 2) AS dpd1_balance_prnp,
+SELECT account_seq, account_id, product_risks, utilization_date, util_month, statement_num, end_date,
+       ROUND(IFF(statement_num = 1, 0, cor_prnp_raw), 2)       AS cor_prnp,
+       ROUND(IFF(statement_num = 1, 0, cor_prnp_gen2_raw), 2)  AS cor_prnp_gen2,
+       ROUND(IFF(statement_num = 1, 0, cor_1p_raw), 2)         AS cor_1p_fact,
+       ROUND(IFF(statement_num = 1, 0, cor_collection_raw), 2) AS cor_collection_fact,
+       ROUND(avg_balance_prnp_net, 2)                          AS avg_balance_prnp_net,
+       ROUND(avg_balance_prnp, 2)                              AS avg_balance_prnp,
+       IFF(statement_num = 1, 0, dpd1_flg)                     AS dpd1_flg,
+       ROUND(IFF(statement_num = 1, 0, dpd1_balance_prnp), 2)  AS dpd1_balance_prnp,
        max_dlq_days, dlq_first_dt
 FROM agg;
 
 
 ---------------------------------------------------------------------------
--- ЗАМЕР ПОСЛЕ СБОРКИ. Три расчёта COR за апрель 2026 по CC:
---   Risk Analytics      (стейтмент, Gen3, statement_num >= 2, x12)  10.60%
---   Portfolio Monitoring (день, Gen3, x365)                         11.12%
---   Finance             (день, Gen2, дельта резерва)                11.23%
--- Тот же расчёт Risk Analytics без фильтра statement_num >= 2:      10.45%
+-- ЗАМЕР ПОСЛЕ СБОРКИ (апрель 2026, продукт CC):
+--   Risk Analytics       (стейтмент, Gen3, statement_num >= 2, x12)  14.62%
+--   Portfolio Monitoring (день, Gen3, x365)                          11.92%
+--   Finance              (день, Gen2, дельта резерва)                11.38%
+-- Разброс 3.2 п.п. Он рождается НЕ из расхождения моделей (Appendix G говорит,
+-- что помесячно Gen2 и Gen3 очень близки), а из методических решений: какое
+-- зерно, включён ли 0-бакет, применён ли фильтр statement_num >= 2, какой
+-- знаменатель, как аннуализировано.
 --
--- Разложение Gen3 за апрель: инфлоу 13.18%, коллекшн −2.06% (высвобождение
--- при излечении), 0-бакет +0.52%. 13.18 − 2.06 = 11.12 — сходится.
+-- Инварианты после сборки:
+--   аддитивность Gen3 и Gen2 — ошибка ровно 0
+--   выходных и праздников в END_DATE — 0
+--   статементов №1 с ненулевым COR — 0
+--   join "COR at inflow" из Appendix C — 1476 строк
+--   снимков прогноза на account x statement — ровно 3
+--   статементов без прогноза — 23.7%
+--   счетов, где дата открытия в ODS (UTC) не совпадает с DM (Mexico City) — 59.4%
 ---------------------------------------------------------------------------
