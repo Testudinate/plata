@@ -26,6 +26,19 @@ log = logging.getLogger(__name__)
 _SQL_FENCE = re.compile(r"```sql\s+(.*?)```", re.DOTALL | re.IGNORECASE)
 _WORD = re.compile(r"[A-Za-z_][A-Za-z0-9_.]*")
 
+# Фильтр линтуется, только если он ЗАПИСАН КАК ПРЕДИКАТ. Часть карточек несёт
+# в MANDATORY_FILTERS прозу («deduplicate to the latest report_month, and
+# filter out NULL/zero forecasts») — это указание человеку, а не условие,
+# которое можно найти в тексте запроса. Токенизация прозы давала находки вида
+# «не найдено: AND, THE, OUT, ZERO» — шум, который обесценивает линт целиком.
+# Тот же урок, что и в детекторе дрейфа: правило, непроверяемое механически,
+# объявляется непроверяемым, а не имитируется.
+_PREDICATE = re.compile(r"[=<>]|\bIN\b|\bIS\b|\bLIKE\b|\bBETWEEN\b", re.IGNORECASE)
+_NOISE = frozenset({
+    "AND", "OR", "NOT", "THE", "OUT", "FILTER", "FILTERS", "WITH", "FROM",
+    "NULL", "ZERO", "LATEST", "DEDUPLICATE", "FORECASTS", "TO", "BY", "PER",
+})
+
 
 def _agent_request(question: str) -> str:
     return json.dumps(
@@ -89,15 +102,24 @@ def lint_sql(statements: list[str], cards: list[dict[str, Any]] | None = None) -
             short = obj.rsplit(".", 1)[-1]
             if short and short not in normalized:
                 continue
+
             required = card["MANDATORY_FILTERS"] or ""
+            if not _PREDICATE.search(required):
+                continue  # проза, а не условие — линтовать нечего
+
             # Из «account_type = 'CC'» берём опорные токены: колонку и значение.
-            tokens = [tok.upper() for tok in _WORD.findall(required) if len(tok) > 2]
-            missing = [tok for tok in tokens if tok not in normalized]
+            tokens = {
+                tok.upper() for tok in _WORD.findall(required)
+                if len(tok) > 2 and tok.upper() not in _NOISE
+            }
+            missing = sorted(tok for tok in tokens if tok not in normalized)
             if missing:
-                findings.append(
+                finding = (
                     f"{obj}: в запросе нет обязательного фильтра «{required}» "
-                    f"(не найдено: {', '.join(sorted(set(missing)))})"
+                    f"(не найдено: {', '.join(missing)})"
                 )
+                if finding not in findings:
+                    findings.append(finding)
     return findings
 
 

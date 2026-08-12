@@ -98,7 +98,12 @@ async def cmd_ask(message: Message) -> None:
         await message.answer(f"Не получилось спросить агента: {exc}")
         return
 
-    await message.answer(format_answer(response.json()))
+    # Ответ привязывается к своему вопросу через reply, а не шлётся новым
+    # сообщением. Вопрос обрабатывается 10-30 секунд, вопросы задают подряд,
+    # и ответы приходят в порядке готовности — без привязки каждый ответ
+    # читается как ответ на СЛЕДУЮЩИЙ вопрос. Один раз это уже произошло:
+    # на вопрос про opex_predict пришёл отказ по PII от предыдущего.
+    await message.reply(format_answer(response.json()))
 
 
 @dp.message(Command("alerts"))
