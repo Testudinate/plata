@@ -89,6 +89,9 @@ def _diagnose(exc: Exception) -> str:
         return "Контейнер не может прочитать ключ: chown 10001:10001 на файле ключа"
     if "does not exist or not authorized" in text:
         return "Роль подключилась, но не видит объект: не хватает грантов из части B"
+    if "399517" in text or "0A000" in text:
+        return ("Аккаунт не принимает один из параметров сессии (feature not supported). "
+                "Аутентификация при этом уже прошла — смотрите предупреждения в логе api")
     return "неопознанный отказ, смотрите detail"
 
 
