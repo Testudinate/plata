@@ -48,6 +48,23 @@
   .pagebreak { break-before: page; }
   .foot { color: #666; font-size: 8.4pt; margin-top: 1mm; }
   strong { font-weight: 600; }
+  .annex {
+    border: 1.6pt solid #8a1c1c; border-radius: 2mm; background: #fbf6f6;
+    padding: 3mm 3.5mm; margin: 4mm 0 4mm 0; break-inside: avoid;
+  }
+  .annex .tag {
+    display: inline-block; background: #8a1c1c; color: #fff; font-size: 7.4pt;
+    font-weight: 700; letter-spacing: 0.4pt; padding: 0.6mm 2mm; border-radius: 1mm;
+    margin-bottom: 1.8mm;
+  }
+  .annex h3 { margin: 0 0 1.5mm 0; color: #8a1c1c; font-size: 11pt; }
+  .annex .grid { display: flex; gap: 2.5mm; margin: 2.5mm 0 2mm 0; }
+  .annex .grid div {
+    flex: 1; background: #fff; border: 0.6pt solid #e0cfcf; border-radius: 1.2mm;
+    padding: 1.6mm; text-align: center;
+  }
+  .annex .grid .v { display: block; font-size: 12pt; font-weight: 700; color: #8a1c1c; line-height: 1.1; }
+  .annex .grid .l { font-size: 7.2pt; color: #555; }
 </style>
 </head>
 <body>
@@ -73,6 +90,27 @@
   <div><span class="v">3.24 п.п.</span><span class="l">разрыв между<br>тремя расчётами</span></div>
   <div><span class="v">26</span><span class="l">автоматических<br>проверок, все проходят</span></div>
   <div><span class="v">3.4k</span><span class="l">токенов — весь<br>контекст для агента</span></div>
+</div>
+
+<div class="annex">
+<span class="tag">ОТДЕЛЬНОЕ ПРИЛОЖЕНИЕ</span>
+<h3>Ревизия исходных материалов: 20 находок в приложениях A–I</h3>
+<p style="margin-bottom:1.5mm">Прежде чем оценивать ландшафт, я сплошь вычитал саму
+документацию — она выдана как «day-one documentation», и именно с её противоречиями
+новый аналитик столкнётся раньше, чем с данными. Каждая находка приведена с цитатой,
+файлом и номером строки.</p>
+<div class="grid">
+  <div><span class="v">20</span><span class="l">находок</span></div>
+  <div><span class="v">6</span><span class="l">ведут к неверному числу</span></div>
+  <div><span class="v">5</span><span class="l">ссылок на файлы, которых нет</span></div>
+  <div><span class="v">3</span><span class="l">видны только прогоном запросов</span></div>
+</div>
+<p style="margin-bottom:0">Среди критичных: запрос в Appendix C, подписанный «Correct COR%»,
+возвращает <strong>отрицательный</strong> процент; свежесть <code>portfolio_cor</code> описана
+одновременно как T-1 и T-2; <code>statement_id</code> объявлен <code>TEXT</code> в одном
+приложении и <code>Integer</code> в другом; календарь праздников содержит дату, перенесённую
+с 2024 года. Разбор и — главное — <strong>чем каждый класс таких ошибок ловится системно</strong>
+(dbt, diff, агент-валидатор): <code>answer/source-review/source-review-ru.pdf</code>.</p>
 </div>
 
 <h2>Part 1. Обзор ландшафта данных</h2>

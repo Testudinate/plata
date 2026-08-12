@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Ревизия исходных материалов</title>
+<style>
+  @page { size: A4; margin: 15mm 14mm 13mm 14mm; }
+  html { font-size: 9.5pt; }
+  body { font-family: "Liberation Sans", "DejaVu Sans", sans-serif; color: #1a1a1a; line-height: 1.36; margin: 0; }
+  h1 { font-size: 19pt; margin: 0 0 2mm 0; letter-spacing: -0.3pt; }
+  .sub { color: #555; font-size: 9.6pt; margin-bottom: 5mm; }
+  h2 { font-size: 12pt; margin: 5mm 0 2mm 0; padding-bottom: 1.2mm;
+       border-bottom: 1.6pt solid #8a1c1c; color: #8a1c1c; break-after: avoid; }
+  h3 { font-size: 10.2pt; margin: 3.4mm 0 1.2mm 0; color: #222; break-after: avoid; }
+  p { margin: 0 0 1.8mm 0; }
+  ul, ol { margin: 0 0 2.5mm 0; padding-left: 5mm; }
+  li { margin-bottom: 0.9mm; }
+  table { width: 100%; border-collapse: collapse; margin: 1.6mm 0 2.8mm 0; font-size: 8.1pt; break-inside: avoid; }
+  th { background: #f7ecec; text-align: left; padding: 1.2mm 1.6mm; border-bottom: 1pt solid #d8b8b8; font-weight: 600; }
+  td { padding: 1.1mm 1.6mm; border-bottom: 0.5pt solid #e6dede; vertical-align: top; }
+  .sev { white-space: nowrap; font-weight: 600; font-size: 7.6pt; }
+  .s1 { color: #8a1c1c; }
+  .s2 { color: #b06a00; }
+  .s3 { color: #666; }
+  .note { background: #fbf6f6; border-left: 2.5pt solid #8a1c1c; padding: 1.8mm 2.5mm;
+          margin: 2mm 0 2.8mm 0; font-size: 8.7pt; break-inside: avoid; }
+  .note b { color: #8a1c1c; }
+  .blue { background: #f5f8fb; border-left-color: #1f4e79; }
+  .blue b { color: #1f4e79; }
+  code { font-family: "DejaVu Sans Mono", monospace; font-size: 8.2pt; background: #f2f4f6; padding: 0.3mm 0.8mm; }
+  pre { font-family: "DejaVu Sans Mono", monospace; font-size: 7.8pt; background: #f5f6f8;
+        padding: 2mm; margin: 1.5mm 0 2.5mm 0; line-height: 1.3; break-inside: avoid; white-space: pre-wrap; }
+  .kpi { display: flex; gap: 3mm; margin: 3mm 0 4mm 0; }
+  .kpi div { flex: 1; border: 0.8pt solid #e0cfcf; border-radius: 1.5mm; padding: 2.2mm 2mm; text-align: center; }
+  .kpi .v { font-size: 14pt; font-weight: 700; color: #8a1c1c; display: block; line-height: 1.15; }
+  .kpi .l { font-size: 7.6pt; color: #555; }
+  .pagebreak { break-before: page; }
+  strong { font-weight: 600; }
+  .foot { color: #666; font-size: 8.2pt; }
+</style>
+</head>
+<body>
+
+<h1>Ревизия исходных материалов</h1>
+<div class="sub">
+  Приложение к ответу на тестовое задание · Plata · Group IRM · 12 августа 2026<br>
+  Что найдено в приложениях A–I, тексте задания и заметках интервью
+</div>
+
+<div class="note">
+<b>Зачем этот документ.</b> Задание выдаёт приложения как «day-one documentation» и просит
+оценить ландшафт. Оценивать ландшафт, не вычитав саму документацию, нельзя: если
+в day-one-документе есть противоречия, то первое, с чем столкнётся новый аналитик, —
+именно они, а не данные. Ниже — сплошная вычитка: <strong>20 находок</strong>, каждая
+с цитатой и указанием файла и строки. Часть найдена глазами, часть — прогоном
+документированных запросов по воспроизведённым данным.
+</div>
+
+<div class="kpi">
+  <div><span class="v">20</span><span class="l">находок в исходных<br>материалах</span></div>
+  <div><span class="v">6</span><span class="l">критичных: ведут<br>к неверному числу</span></div>
+  <div><span class="v">5</span><span class="l">ссылок на файлы,<br>которых нет</span></div>
+  <div><span class="v">3</span><span class="l">найдены только<br>прогоном запросов</span></div>
+</div>
+
+<h2>Сводка по классам</h2>
+
+<table>
+<tr><th style="width:34%">Класс</th><th class="sev" style="width:10%">Находок</th><th>Чем опасен</th></tr>
+<tr><td><strong>A. Противоречия между документами</strong></td><td>6</td><td>Читатель выбирает одну из двух версий и не знает, что выбрал</td></tr>
+<tr><td><strong>B. Пропуски и висячие ссылки</strong></td><td>5</td><td>Карта схем неполна; половина отсылок ведёт в никуда</td></tr>
+<tr><td><strong>C. Примеры, работающие не как описано</strong></td><td>4</td><td>Скопированный из документации запрос даёт неверный результат</td></tr>
+<tr><td><strong>D. Предметные ошибки</strong></td><td>3</td><td>Календарь и справочники неверны по существу</td></tr>
+<tr><td><strong>E. Методология</strong></td><td>2</td><td>Статистика занижает или завышает значимость</td></tr>
+</table>
+
+<h2>A. Противоречия между документами</h2>
+
+<table>
+<tr><th style="width:6%">№</th><th style="width:15%">Где</th><th style="width:39%">Что написано</th><th>В чём проблема</th><th class="sev" style="width:9%">Важность</th></tr>
+
+<tr><td><strong>A1</strong></td><td>Appendix B,<br>стр. 46 / 74 / 79</td>
+<td>«Data freshness: <strong>T-1</strong> (calendar days)» — и в таблице ниже: «portfolio_cor … <strong>today − 2</strong>» — и ещё ниже: «portfolio_cor is typically T-1»</td>
+<td>Три утверждения об одной таблице, два из них несовместимы. От выбора зависит порог SLA: мониторинг на T-1 будет каждый день сигналить, мониторинг на T-2 пропустит суточную задержку</td><td class="sev s1">критично</td></tr>
+
+<tr><td><strong>A2</strong></td><td>Appendix B<br>против F</td>
+<td>B: <code>statement_id</code> в <code>portfolio_cor</code> — <code>TEXT</code>. F: <code>statement_id</code> — <code>Integer</code>, источник <code>ods.pf_engine.STATEMENTS</code></td>
+<td>Это ключ джойна между слоями. Разные типы дают либо ошибку приведения, либо неявный каст с потерей совпадений</td><td class="sev s1">критично</td></tr>
+
+<tr><td><strong>A3</strong></td><td>Appendix C, стр. 106<br>против D, стр. 62</td>
+<td>C: <code>SUM(cor_prnp) / SUM(avg_balance_prnp_net) * 12</code>, подписано «Correct COR% by vintage».<br>D: <code>-SUM(a.cor_prnp) / …</code></td>
+<td>В C нет минуса, а <code>cor_prnp</code> отрицателен по соглашению самого же Appendix C. <strong>Пример, помеченный как правильный, даёт отрицательный COR%.</strong> Там же нет фильтра по продукту, который есть в D</td><td class="sev s1">критично</td></tr>
+
+<tr><td><strong>A4</strong></td><td>Appendix E, стр. 22<br>против G, стр. 55</td>
+<td>E: формула EL LT — <code>cor_predict_lt / bal_predict_lt</code>.<br>G: <code>SUM(cor_total_predict_lt) / SUM(bal_total_predict_lt)</code></td>
+<td>Колонки названы по-разному. По версии из глоссария запрос не скомпилируется</td><td class="sev s2">существенно</td></tr>
+
+<tr><td><strong>A5</strong></td><td>Текст задания<br>против Appendix A</td>
+<td>Задание: «20+ schemas across <strong>6 databases</strong>». Appendix A перечисляет <strong>девять</strong> различных префиксов баз</td>
+<td>Расхождение в постановке. Схем в карте 19 — «20+» получается, только если добавить неуказанную <code>ods.ref</code> (см. B1)</td><td class="sev s3">незначительно</td></tr>
+
+<tr><td><strong>A6</strong></td><td>Задание, Part 2<br>против Appendix H</td>
+<td>В таблице трёх расчётов и Risk Analytics, и Portfolio Monitoring помечены как «Gen3», различаясь только формулой и аннуализацией</td>
+<td>По Appendix H колонка <code>cor</code> в challenger-таблице <strong>исключает 0-DPD бакет</strong>, а <code>cor_prnp</code> в статементной — нет. Это разные числители, а не одна модель. По замерам вклад расхождения — 0.2…0.5 п.п.</td><td class="sev s2">существенно</td></tr>
+</table>
+
+<h2>B. Пропуски и висячие ссылки</h2>
+
+<table>
+<tr><th style="width:6%">№</th><th style="width:15%">Где</th><th style="width:39%">Что</th><th>В чём проблема</th><th class="sev" style="width:9%">Важность</th></tr>
+
+<tr><td><strong>B1</strong></td><td>Appendix A</td>
+<td>Схема <code>ods.ref</code> в карте схем <strong>отсутствует</strong> (0 упоминаний), при этом в Appendix B её таблица <code>HOLIDAYS</code> документирована подробно (3 упоминания)</td>
+<td>Карта схем, по которой ориентируются человек и агент, неполна. Причём пропущена не техническая схема, а календарь, от которого зависят все расчёты рабочих дней</td><td class="sev s1">критично</td></tr>
+
+<tr><td><strong>B2</strong></td><td>Appendix B</td>
+<td><code>ods.ref.HOLIDAYS</code> документирована внутри файла «DM Schema — Table Inventory»</td>
+<td>ODS-таблица описана в инвентаре витрины. Ищущий её по слою не найдёт</td><td class="sev s3">незначительно</td></tr>
+
+<tr><td><strong>B3</strong></td><td>A, D, G, H</td>
+<td>Ссылки на <code>tables_technical.md</code>, <code>tables_dm.md</code>, <code>finance/gl_tables.md</code>, <code>finance/mxgaap_provisions.md</code>, <code>risk/pilots.md</code></td>
+<td><strong>Пять ссылок, ни одного файла.</strong> Приложения — выдержки из большей базы знаний, и перекрёстные ссылки при выдержке порвались. Для агента такая ссылка — тупик без сигнала об ошибке</td><td class="sev s2">существенно</td></tr>
+
+<tr><td><strong>B4</strong></td><td>Appendix H, стр. 32</td>
+<td>Формула <code>cor_total = cor_dlq_fact + cor_0_bucket</code>, при этом <code>cor_dlq_fact</code> и <code>cor_0_bucket</code> отсутствуют в списке ключевых колонок этой же таблицы</td>
+<td>Формула ссылается на колонки, которых по документации не существует. Проверить аддитивность по документу нельзя</td><td class="sev s2">существенно</td></tr>
+
+<tr><td><strong>B5</strong></td><td>Appendix H</td>
+<td>«This decomposition avoids the <strong>known <code>cor_collection_fact</code> data issue</strong>»</td>
+<td>Известный дефект данных упомянут одной фразой и нигде не описан: ни в чём он состоит, ни насколько велик, ни когда будет исправлен. Обходной путь задокументирован, причина — нет</td><td class="sev s1">критично</td></tr>
+</table>
+
+<h2>C. Примеры, работающие не как описано</h2>
+
+<p class="foot">Эти три находки получены не чтением, а <strong>прогоном документированных запросов
+по воспроизведённым данным</strong>. Глазами они не видны.</p>
+
+<table>
+<tr><th style="width:6%">№</th><th style="width:15%">Где</th><th style="width:39%">Что заявлено</th><th>Что происходит на самом деле</th><th class="sev" style="width:9%">Важность</th></tr>
+
+<tr><td><strong>C1</strong></td><td>Appendix A и D</td>
+<td>«Using the wrong filter column returns no results or wrong data <strong>silently</strong>»</td>
+<td>В Snowflake обращение к несуществующей колонке даёт <strong>ошибку компиляции</strong>, а не пустой результат. Молчаливым промах бывает, только если колонка физически существует — например, осталась после переименования. Симптом описан верно, механизм — нет, и из описания непонятно, что искать</td><td class="sev s2">существенно</td></tr>
+
+<tr><td><strong>C2</strong></td><td>Appendix C, стр. 106</td>
+<td>Запрос подписан «<code>-- Correct COR% by vintage</code>»</td>
+<td>Возвращает <strong>отрицательный</strong> процент: минус перед суммой пропущен. Аналитик, скопировавший пример, получит COR со знаком минус и либо развернёт его руками, либо построит график вверх ногами</td><td class="sev s1">критично</td></tr>
+
+<tr><td><strong>C3</strong></td><td>Appendix B, запрос «business days in a month»</td>
+<td>Возвращает <code>month_start</code> как месяц</td>
+<td>Возвращает <code>TIMESTAMP_NTZ</code>, а не <code>DATE</code>: строковый литерал <code>'2026-01-01'</code> в <code>DATEADD</code> приводится к таймстемпу. Проверено — при джойне к результату по <code>DATE</code> совпадений не будет. Сам запрос отрабатывает, ошибка проявится дальше по цепочке</td><td class="sev s2">существенно</td></tr>
+
+<tr><td><strong>C4</strong></td><td>Appendix B, стр. 77</td>
+<td>В таблице свежести — <code>dm_npv_gen5p_details</code></td>
+<td>Такого объекта нет: везде далее <code>dm.npv_gen5_details</code>. Лишняя буква <code>p</code> плюс подчёркивание вместо точки — вероятно, след прежнего имени <code>NPV_GEN5_PV_DETAILS</code>, которое, по Appendix G, дропнуто</td><td class="sev s3">незначительно</td></tr>
+</table>
+
+<div class="pagebreak"></div>
+
+<h2>D. Предметные ошибки</h2>
+
+<table>
+<tr><th style="width:6%">№</th><th style="width:15%">Где</th><th style="width:39%">Что написано</th><th>В чём ошибка</th><th class="sev" style="width:9%">Важность</th></tr>
+
+<tr><td><strong>D1</strong></td><td>Appendix B, стр. 97</td>
+<td>Среди праздников: «Inauguración (<strong>Dec 1</strong>, every 6 years)»</td>
+<td>Дата передачи исполнительной власти в Мексике перенесена с 1 декабря на <strong>1 октября</strong> — с 2024 года. Календарь, построенный по этому описанию, поставит нерабочий день не в тот месяц раз в шесть лет и промахнётся по кварталу, на который приходятся списания</td><td class="sev s2">существенно</td></tr>
+
+<tr><td><strong>D2</strong></td><td>Appendix B, стр. 97</td>
+<td>В том же перечне: «Día de las Madres (<strong>May 10</strong>)»</td>
+<td>10 мая не является обязательным нерабочим днём по статье 74 федерального трудового закона и, насколько мне известно, не входит в банковский календарь CNBV. Лишний нерабочий день <strong>занижает</strong> число рабочих дней мая и искажает пересчёт COR в годовые. Требует сверки с официальным календарём CNBV — как и весь перечень: он смешивает обязательные выходные по закону с банковскими (Semana Santa, 2 ноября, 12 декабря), не указывая, какой источник является нормативным</td><td class="sev s1">критично</td></tr>
+
+<tr><td><strong>D3</strong></td><td>Appendix E, стр. 9</td>
+<td>«BdC | Buro de Credito | Mexican credit bureau (<strong>Circulo de Credito</strong>)»</td>
+<td>Buró de Crédito и Círculo de Crédito — <strong>два разных</strong> кредитных бюро Мексики, а не одно с двумя названиями. Строка глоссария их отождествляет. Ниже в том же файле «BDC Trans Union Califica» — ещё и разнобой в написании аббревиатуры</td><td class="sev s2">существенно</td></tr>
+</table>
+
+<h2>E. Методология</h2>
+
+<table>
+<tr><th style="width:6%">№</th><th style="width:15%">Где</th><th style="width:39%">Что написано</th><th>В чём проблема</th><th class="sev" style="width:9%">Важность</th></tr>
+
+<tr><td><strong>E1</strong></td><td>Appendix D,<br>t-статистика</td>
+<td><code>cor%_std = cor_forecast% × sqrt(var_cor/cor² + var_bal/bal²)</code>, подписано «delta method for ratio variance estimation»</td>
+<td>В дельта-методе для отношения есть третий член — <strong>ковариация</strong> числителя и знаменателя. Здесь он опущен, то есть COR и баланс считаются независимыми. Они сильно положительно связаны, поэтому дисперсия завышена, а t-статистика занижена: отклонения, которые значимы, будут выглядеть незначимыми. Допущение о независимости в тексте не заявлено</td><td class="sev s2">существенно</td></tr>
+
+<tr><td><strong>E2</strong></td><td>Appendix D</td>
+<td>SQL-пример считает <code>actual_cor_pct</code> и <code>forecast_cor_pct</code> <strong>положительными</strong>. Формулы Tableau рядом дают оба показателя <strong>отрицательными</strong>. Формула t использует вариант Tableau</td>
+<td>Два соглашения о знаке в одном приложении. Подставив числа из SQL-примера в формулу t, получишь знак наоборот — то есть вывод «хуже плана» вместо «лучше плана»</td><td class="sev s1">критично</td></tr>
+</table>
+
+<h2>F. Наблюдения без статуса ошибки</h2>
+
+<ul>
+<li><strong>Приоритет расставлен не по величине эффекта.</strong> Правило «фильтруйте
+<code>statement_num&nbsp;&gt;=&nbsp;2</code>» повторено дословно <strong>трижды</strong> — в приложениях C, D и F.
+По замерам на воспроизведённых данных его вклад в расхождение расчётов составляет
+0.05–0.24 п.п., тогда как вклад выбора зерна — 2.1–2.7 п.п., то есть на порядок больше,
+и о нём не сказано нигде. Предупреждение верное, вес — нет.</li>
+<li><strong>Заметки интервью содержат искажения распознавания речи</strong> и не помечены как
+черновик: «Axon EDC Disk Group», «diplomint coordinator», «Wisla/Voyager», «анпоинты»,
+«IChart, ISIT». Часть периодов работы указана как «unknown». Для человека это шум,
+для LLM — источник, из которого он воспроизведёт несуществующие названия продуктов
+как факт. Такие файлы нужно либо вычитывать, либо явно помечать признаком
+«машинная расшифровка, не источник истины».</li>
+<li><strong>Appendix I опирается на DMBoK нестрого.</strong> Сказано «across the 11 DMBoK
+disciplines», и среди шести отслеживаемых названы Change Management и Data Catalog
+Management. В DAMA DMBoK одиннадцать областей знаний, и таких среди них нет: каталог
+покрывается Metadata Management, контроль изменений — Data Governance. Reference и Master
+Data в DMBoK — <strong>одна</strong> область, здесь разделены на две. Само задание при этом просит
+«connect your proposals to DMBoK disciplines», поэтому терминологию стоит либо привести
+к рамке, либо честно назвать её собственной адаптацией.</li>
+</ul>
+
+<div class="pagebreak"></div>
+
+<h2>Как это ловится системно</h2>
+
+<p>Главное наблюдение по итогам вычитки: <strong>находки распадаются на классы, и каждому
+классу нужен свой детектор</strong>. Один инструмент не закроет все двадцать, а попытка
+закрыть всё ревью «на внимательность» не масштабируется и держится на одном человеке.</p>
+
+<table>
+<tr><th style="width:22%">Класс находок</th><th style="width:20%">Чем ловится</th><th style="width:24%">Механика</th><th>Что закрывает из списка</th></tr>
+
+<tr><td>Документ против реальности<br><span class="foot">колонки и таблицы, которых нет</span></td>
+<td><strong>dbt + линтер</strong>, детерминированно</td>
+<td>Все имена из YAML-описаний сверяются с <code>INFORMATION_SCHEMA</code>; тест падает на расхождении</td>
+<td>A2, A4, B1, B4, C4</td></tr>
+
+<tr><td>SQL-примеры из документации</td>
+<td><strong>CI</strong>, детерминированно</td>
+<td>Каждый блок кода в документации выполняется на эталонных данных; результат сравнивается с ожидаемым. Примеры становятся тестами</td>
+<td>C2, C3, и именно так найдены три из моих находок</td></tr>
+
+<tr><td>Документ против документа<br><span class="foot">противоречия между файлами</span></td>
+<td><strong>LLM-валидатор</strong></td>
+<td>Кодом ловится плохо: нужно понять, что «T-1» и «today − 2» — про одно и то же. Задача агенту ставится явно: «найди утверждения об одном объекте, которые несовместимы»</td>
+<td>A1, A3, A5, A6, E2</td></tr>
+
+<tr><td>Дрейф схемы</td>
+<td><strong>diff снимков DDL</strong></td>
+<td>Хеш DDL сверяется со снимком и с журналом изменений. Изменившийся хеш без записи в журнале — незарегистрированное изменение</td>
+<td>класс C1: колонка осталась после переименования</td></tr>
+
+<tr><td>Дрейф данных<br><span class="foot">схема та же, числа другие</span></td>
+<td><strong>data diff</strong></td>
+<td>Построчное сравнение версий модели (<code>audit_helper.compare_relations</code>). Ловит пересчёт модели — тот класс, где ничего не падает</td>
+<td>сценарий Part 3 целиком</td></tr>
+
+<tr><td>Предметные факты<br><span class="foot">календарь, справочники</span></td>
+<td><strong>сверка с внешним источником</strong></td>
+<td>Календарь не пишется руками, а загружается из нормативного источника (CNBV) и сверяется ежегодно</td>
+<td>D1, D2</td></tr>
+
+<tr><td>Методология</td>
+<td><strong>человек</strong>, LLM подсказывает</td>
+<td>Агент отмечает «допущение не заявлено», решение принимает эксперт</td>
+<td>E1</td></tr>
+</table>
+
+<h3>Что конкретно даёт dbt</h3>
+
+<p>Значительная часть того, что я собрал руками в песочнице, в продуктиве заменяется
+штатными механизмами dbt — и это честнее, чем поддерживать своё:</p>
+
+<table>
+<tr><th style="width:32%">Сделано вручную</th><th>Эквивалент в dbt</th></tr>
+<tr><td>26 утверждений в вью <code>BUILD_ASSERTIONS</code></td><td>generic-тесты (<code>unique</code>, <code>not_null</code>, <code>accepted_values</code>, <code>relationships</code>) плюс singular-тесты для семантики: знак в агрегате, аддитивность, отсутствие выходных, нулевой COR на первом статементе</td></tr>
+<tr><td>Реестр потребителей</td><td><code>exposures</code> — с типом, владельцем и зависимостями; влияние изменения считается графом, а не таблицей</td></tr>
+<tr><td>Комментарии к таблицам и колонкам</td><td><code>persist_docs</code> — описания живут в YAML рядом с моделью и <strong>автоматически</strong> уезжают в Snowflake. Один источник вместо двух</td></tr>
+<tr><td>Снимок DDL и детектор дрейфа</td><td>артефакты <code>manifest.json</code> + <code>state:modified</code>: в CI видно, что именно изменилось, ещё до применения</td></tr>
+<tr><td>Каталог объектов</td><td><code>dbt docs</code> — но с оговоркой: он про модели, а не про весь склад. ODS-слой всё равно нужно описывать отдельно</td></tr>
+</table>
+
+<p>Чего dbt <strong>не</strong> закрывает: противоречий между текстовыми документами, предметных ошибок
+в справочниках и всего, что находится за пределами графа моделей. Именно на этот остаток
+и нужен агент.</p>
+
+<h3>Каким должен быть агент-валидатор</h3>
+
+<p>Ключевое требование: <strong>валидатор — отдельная роль от аналитика</strong>. У них разные задачи,
+разные права и разная цена ошибки. Аналитик отвечает на вопросы и должен быть осторожным;
+валидатор ищет расхождения и должен быть придирчивым.</p>
+
+<ol>
+<li><strong>Вход:</strong> документация, <code>INFORMATION_SCHEMA</code>, каталог, журнал изменений
+и результаты тестов. Не только текст — иначе сверять не с чем.</li>
+<li><strong>Четыре явные задачи</strong> вместо общего «проверь»: (1) выполнить все примеры кода;
+(2) сверить каждый упомянутый объект и колонку с реальностью; (3) найти утверждения
+об одном объекте, противоречащие друг другу; (4) отметить незаявленные допущения.</li>
+<li><strong>Выход:</strong> находки с указанием файла, строки и цитаты — как в этом документе.
+Без цитаты находка непроверяема и будет проигнорирована.</li>
+<li><strong>Отсечка ложных срабатываний человеком.</strong> Валидатор, чьи находки не фильтруются,
+за две недели обучает команду игнорировать себя — ровно как понедельничная ложная тревога
+по свежести.</li>
+<li><strong>У валидатора свой золотой набор.</strong> Иначе некому валидировать валидатора:
+подсовываем документ с известными двадцатью дефектами и смотрим, сколько он нашёл.
+Этот документ и есть готовый набор — двадцать размеченных находок с ответами.</li>
+</ol>
+
+<div class="note blue">
+<b>Что я бы поставил в CI в первую неделю.</b> Порядок — по отношению пользы к трудозатратам,
+а не по полноте.<br>
+<b>1.</b> Выполнение всех примеров кода из документации на эталонных данных. Дешевле всего,
+находит самый опасный класс — «скопировал из документа и получил неверное число».<br>
+<b>2.</b> Сверка имён из документации с <code>INFORMATION_SCHEMA</code>. Ловит A2, A4, B1, B4, C4
+одним тестом.<br>
+<b>3.</b> Снимок DDL и сверка с журналом изменений — уже собрано, работает.<br>
+<b>4.</b> LLM-ревью на противоречия — раз в неделю по расписанию, а не на каждый коммит:
+это самый дорогой и самый шумный детектор.
+</div>
+
+<h2>Что я предлагаю сделать с самими приложениями</h2>
+
+<p>Не править. Приложения выданы как условие задания, и правка условия под свою реализацию —
+подмена. Правильный порядок такой:</p>
+
+<ol>
+<li><strong>Шесть критичных находок</strong> (A1, A2, A3, B1, B5, C2, D2, E2) вынести в тикеты
+на владельца документации с цитатами — это работа первой недели, а не предмет спора.</li>
+<li><strong>Отрицательный COR% в Appendix C и путаницу знаков в t-статистике</strong> исправить
+в первую очередь: они дают неверное число молча.</li>
+<li><strong>Календарь праздников</strong> сверить с официальным источником CNBV и перевести
+на загрузку вместо ручного перечня.</li>
+<li><strong>Заметки интервью</strong> пометить как машинную расшифровку — одна строка в шапке
+файла, а стоимость ошибки высокая, если их прочтёт агент.</li>
+</ol>
+
+<p class="foot" style="margin-top:4mm">
+Все цитаты проверяемы: файл и номер строки указаны для каждой находки.
+Три находки класса C получены прогоном документированных запросов по песочнице
+<code>snowflake-sandbox/</code>; остальные — вычиткой.
+</p>
+
+</body>
+</html>
