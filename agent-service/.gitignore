@@ -1,5 +1,6 @@
 .env
 __pycache__/
 *.pyc
-baseline.json
+data/*
+!data/.gitkeep
 secrets/
