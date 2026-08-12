@@ -11,6 +11,7 @@ from __future__ import annotations
 import logging
 
 from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from . import copilot
@@ -51,12 +52,47 @@ def healthz() -> dict[str, str]:
 
 
 @app.get("/readyz")
-def readyz() -> dict[str, object]:
-    """Готовность: одно дешёвое обращение к метаданным контекст-слоя."""
+def readyz() -> JSONResponse:
+    """Готовность: одно дешёвое обращение к метаданным контекст-слоя.
+
+    Проверка готовности обязана говорить, ПОЧЕМУ не готова. Первая редакция
+    отдавала голый 500 на любую ошибку соединения, и «404 на login-request»
+    (неверное имя аккаунта) выглядело точно так же, как «пользователя нет» и
+    как «ключ не подошёл» — то есть никак.
+    """
     from . import snowflake_client as sf
 
-    rows = sf.fetch_all("SELECT COUNT(*) AS N FROM RISK_GOV.AGENT.TABLE_CARDS")
-    return {"status": "ok", "table_cards": rows[0]["N"] if rows else 0}
+    try:
+        rows = sf.fetch_all("SELECT COUNT(*) AS N FROM RISK_GOV.AGENT.TABLE_CARDS")
+    except Exception as exc:
+        log.warning("проверка готовности не прошла: %s", exc)
+        return JSONResponse(
+            status_code=503,
+            content={"status": "not_ready", "reason": _diagnose(exc), "detail": str(exc)[:500]},
+        )
+    return JSONResponse(content={"status": "ok", "table_cards": rows[0]["N"] if rows else 0})
+
+
+def _diagnose(exc: Exception) -> str:
+    """Перевод типовых отказов Snowflake в понятное действие."""
+    text = str(exc)
+    if "login-request" in text and "404" in text:
+        return ("SNOWFLAKE_ACCOUNT задан неверно: это account locator, а не идентификатор. "
+                "Нужна форма <организация>-<аккаунт> из URL Snowsight")
+    if "250001" in text or "Incorrect username or password" in text:
+        return "Пользователь не найден или ключ не подошёл: проверьте CREATE USER и ALTER USER ... SET RSA_PUBLIC_KEY"
+    if "JWT token is invalid" in text or "390144" in text:
+        return "Публичный ключ на пользователе не соответствует приватному в контейнере"
+    if "Role" in text and "not exist" in text:
+        return "Роль не выдана пользователю: GRANT ROLE LLM_AGENT_RO TO USER PLATA_COPILOT_SVC"
+    if "Permission denied" in text or "Errno 13" in text:
+        return "Контейнер не может прочитать ключ: chown 10001:10001 на файле ключа"
+    if "does not exist or not authorized" in text:
+        return "Роль подключилась, но не видит объект: не хватает грантов из части B"
+    if "399517" in text or "0A000" in text:
+        return ("Аккаунт не принимает один из параметров сессии (feature not supported). "
+                "Аутентификация при этом уже прошла — смотрите предупреждения в логе api")
+    return "неопознанный отказ, смотрите detail"
 
 
 @app.post("/ask", response_model=AskResponse, dependencies=[Depends(require_key)])

@@ -59,10 +59,23 @@ resource monitor. Пока пользователя нет, у роли ноль
 
 ## Проверки
 
+Прогон идёт 5–8 минут: 16 вопросов последовательно, каждый по 10–30 секунд.
+Это ночная проверка, а не интерактивная — в терминале её легко прервать на
+середине, поэтому лучше в фоне с логом.
+
 ```bash
-docker compose exec api python -m app.eval_agent            # золотой набор
-docker compose exec api python -m app.eval_agent --compare baseline.json
+mkdir -p data && chown 10001:10001 data          # один раз
+
+# снять базу (в фоне, лог рядом)
+docker compose exec -T api python -m app.eval_agent --save /srv/data/baseline.json \
+  > data/eval.log 2>&1 &
+
+# сравнить после изменения контекста, промпта или модели
+docker compose exec -T api python -m app.eval_agent --compare /srv/data/baseline.json
 ```
+
+`data/` смонтирован в контейнер, поэтому baseline переживает `up -d --build`.
+Без этого после первой же пересборки сравнивать не с чем.
 
 Прогон валится с кодом 2 при деградации против baseline. Метрики: доля
 числовых ответов в пределах `TOLERANCE`, доля правильно выбранного объекта,

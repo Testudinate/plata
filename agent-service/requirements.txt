@@ -1,6 +1,11 @@
+# Пины проверены резолвером pip целиком, а не по одному пакету.
+# pydantic держится на 2.9.x намеренно: aiogram 3.15 требует <2.10, и
+# попытка поставить 2.10.4 роняет сборку на ResolutionImpossible.
+# Двигать pydantic вверх можно только вместе с aiogram, и только прогнав
+# pip install --dry-run по всему списку.
 fastapi==0.115.6
 uvicorn[standard]==0.34.0
-pydantic==2.10.4
+pydantic==2.9.2
 snowflake-connector-python==3.13.0
 cryptography==44.0.0
 aiogram==3.15.0
