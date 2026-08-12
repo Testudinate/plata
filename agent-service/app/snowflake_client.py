@@ -73,7 +73,22 @@ def session(tag: dict[str, Any] | None = None, mode: Mode = "reader") -> Iterato
         cur = conn.cursor()
         if mode == "reader":
             # Ставится до первого содержательного запроса и обратно не снимается.
-            cur.execute("ALTER SESSION SET CORTEX_CLIENT_READ_ONLY = TRUE")
+            #
+            # Аккаунт может не поддерживать выставление этого параметра через
+            # ALTER SESSION — тогда прилетает 399517 (0A000, feature not
+            # supported). Это ВТОРОЙ слой поверх прав роли, а не сама граница:
+            # LLM_AGENT_RO read-only независимо от него. Поэтому отказ не валит
+            # сессию, но и не проходит молча — в логе остаётся предупреждение,
+            # иначе однажды «второй слой есть» станет неотличимо от «его нет».
+            try:
+                cur.execute("ALTER SESSION SET CORTEX_CLIENT_READ_ONLY = TRUE")
+            except Exception as exc:
+                log.warning(
+                    "CORTEX_CLIENT_READ_ONLY не выставлен (%s). Запрет записи остаётся "
+                    "на правах роли %s — это настоящая граница, но клиентского "
+                    "дублирования сейчас нет",
+                    exc, role,
+                )
         cur.execute(f"ALTER SESSION SET STATEMENT_TIMEOUT_IN_SECONDS = {cfg.query_timeout_s}")
         if tag:
             cur.execute("ALTER SESSION SET QUERY_TAG = %s", (json.dumps(tag, ensure_ascii=False),))
