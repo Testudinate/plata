@@ -57,6 +57,11 @@ SELECT * FROM RISK_GOV.DQ.V_COR_RECONCILIATION WHERE month_start = '2026-04-01';
 | Фаза 8 — governance-слой | `sql/08_governance.sql` | **готово** — каталог, канон и мост, DQ-скоркарта, реестры изменений, маскирование |
 | Фаза 9 — контекст-слой для LLM | `sql/09_agent_context.sql` | **готово** — карточки, граф джойнов, грабли с детекторами, семантическая вью, 16 золотых вопросов |
 | Фаза 10 — пересборка и снимок DDL | `sql/10_rebuild_and_teardown.sql` | **готово** — песочница собрана целиком |
+| Фаза 11 — Cortex Search по документации | `sql/11_cortex_search.sql` | **готово** — 9 приложений, 86 чанков, одна поверхность на прозу и контракты |
+| Фаза 12 — агент как объект аккаунта | `sql/12_agent.sql` | **готово** — 3 инструмента; Q01/Q15/Q16 отрабатывают |
+| Фаза 13 — детектор дрейфа и SLA | `sql/13_alerts_and_dynamic.sql` | **готово** — alert идёт, dynamic table держит TARGET_LAG |
+| Фаза 14 — dbt-проект внутри Snowflake | `sql/14_dbt_project.sql` | **готово** — PASS=11, ERROR=0 |
+| Доступ из Telegram | `../agent-service/` | **написано, не развёрнуто** — нужен шаг 4 из `sql/00b_bootstrap_copilot_accountadmin.sql` |
 
 Проверка корректности сборки в одну строку:
 
@@ -75,7 +80,13 @@ Appendix F перестанут сходиться. `USDMXN` наполнен с
 
 ### Кто что запускает
 
-`sql/00_bootstrap_accountadmin.sql` — **единственный** файл для ручного запуска,
+Под `ACCOUNTADMIN` вручную запускаются **два** файла и только они:
+`sql/00_bootstrap_accountadmin.sql` (базы, роли, монитор) и
+`sql/00b_bootstrap_copilot_accountadmin.sql` (сервисный пользователь агента,
+git-репозиторий, параметры Cortex, network policy) — второй после фаз 12–13,
+потому что опирается на их объекты.
+
+`sql/00_bootstrap_accountadmin.sql` — первый файл для ручного запуска,
 и только под `ACCOUNTADMIN`: сессия MCP закреплена за `HERMES_MCP_ROLE`,
 `USE ROLE` в ней запрещён, а `CREATE DATABASE`, `CREATE ROLE` и гранты на
 аккаунте требуют админа.
