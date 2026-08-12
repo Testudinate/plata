@@ -104,11 +104,12 @@ GRANT EXECUTE ALERT ON ACCOUNT TO ROLE HERMES_MCP_ROLE;
 -- 5. Ограничитель расходов. Песочница синтетическая, но warehouse настоящий.
 ---------------------------------------------------------------------------
 
+-- INITIALLY_SUSPENDED здесь быть не может: это свойство только CREATE WAREHOUSE,
+-- в ALTER оно отвергается компилятором.
 ALTER WAREHOUSE COMPUTE_WH SET
-    WAREHOUSE_SIZE   = 'XSMALL'
-    AUTO_SUSPEND     = 60
-    AUTO_RESUME      = TRUE
-    INITIALLY_SUSPENDED = FALSE;
+    WAREHOUSE_SIZE = 'XSMALL'
+    AUTO_SUSPEND   = 60
+    AUTO_RESUME    = TRUE;
 
 CREATE RESOURCE MONITOR IF NOT EXISTS RM_SANDBOX
     WITH CREDIT_QUOTA = 20
