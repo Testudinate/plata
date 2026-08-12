@@ -80,20 +80,26 @@ def session(tag: dict[str, Any] | None = None, mode: Mode = "reader") -> Iterato
         # Ни один из них не является границей безопасности: настоящий запрет
         # записи — это права роли LLM_AGENT_RO. Поэтому отказ логируется и
         # работа продолжается, но никогда не проглатывается молча.
-        setup: list[tuple[str, tuple[Any, ...], str]] = []
-        if mode == "reader":
-            setup.append((
-                "ALTER SESSION SET CORTEX_CLIENT_READ_ONLY = TRUE", (),
-                "клиентское дублирование read-only недоступно; запрет записи держится правами роли",
-            ))
-        setup.append((
+        # ПОРЯДОК ЗДЕСЬ — НЕ СТИЛЬ, А УСЛОВИЕ РАБОТОСПОСОБНОСТИ.
+        # CORTEX_CLIENT_READ_ONLY разрешает в сессии только SELECT, EXPLAIN,
+        # SHOW и DESCRIBE. ALTER SESSION в этот список не входит, поэтому
+        # выставленный первым он глушит всё, что идёт после: и таймаут, и
+        # QUERY_TAG. Симптом обманчивый — 399517 (0A000, feature not supported)
+        # выглядит как ограничение аккаунта, хотя тот же оператор в обычной
+        # сессии проходит. Read-only ставится ПОСЛЕДНИМ и только для reader.
+        setup: list[tuple[str, tuple[Any, ...], str]] = [(
             f"ALTER SESSION SET STATEMENT_TIMEOUT_IN_SECONDS = {cfg.query_timeout_s}", (),
             "таймаут запроса не выставлен; долгий запрос не будет прерван сам",
-        ))
+        )]
         if tag:
             setup.append((
                 "ALTER SESSION SET QUERY_TAG = %s", (json.dumps(tag, ensure_ascii=False),),
                 "QUERY_TAG не выставлен; аудит покажет 'агент спросил' без указания, кто попросил",
+            ))
+        if mode == "reader":
+            setup.append((
+                "ALTER SESSION SET CORTEX_CLIENT_READ_ONLY = TRUE", (),
+                "клиентское дублирование read-only недоступно; запрет записи держится правами роли",
             ))
 
         for statement, params, consequence in setup:
