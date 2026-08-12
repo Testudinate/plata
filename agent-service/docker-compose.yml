@@ -1,0 +1,45 @@
+services:
+  api:
+    build: .
+    container_name: plata-copilot-api
+    restart: unless-stopped
+    command: uvicorn app.api:app --host 0.0.0.0 --port 8770
+    env_file: .env
+    volumes:
+      # Ключ монтируется файлом только на чтение и в образ не попадает.
+      - ${SNOWFLAKE_PRIVATE_KEY_HOST_PATH}:/secrets/snowflake_key.p8:ro
+    ports:
+      # Только loopback. Наружу этот порт не публикуется никогда:
+      # X-API-Key ушёл бы открытым текстом.
+      - "127.0.0.1:8770:8770"
+    networks: [default, llm-shared]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8770/healthz')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  bot:
+    build: .
+    container_name: plata-copilot-bot
+    restart: unless-stopped
+    command: python -m app.bot
+    env_file: .env
+    environment:
+      # Внутри compose до API идём по имени сервиса. 127.0.0.1 здесь — это
+      # петля самого контейнера, а не хост: грабля стоила отдельного вечера
+      # в соседнем проекте.
+      COPILOT_API_URL: http://api:8770
+    volumes:
+      - ${SNOWFLAKE_PRIVATE_KEY_HOST_PATH}:/secrets/snowflake_key.p8:ro
+    depends_on:
+      api:
+        condition: service_healthy
+    networks: [default]
+
+networks:
+  # Общая сеть с hermes-memory: учёт расхода уходит в существующий /usage,
+  # второй системы учёта не заводим.
+  llm-shared:
+    external: true
+    name: llm-shared
