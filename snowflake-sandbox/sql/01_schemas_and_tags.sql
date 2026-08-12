@@ -45,41 +45,42 @@ BEGIN
     CREATE SCHEMA IF NOT EXISTS RISK_GOV.AGENT COMMENT = 'LLM context layer: table cards, join graph, pitfalls, metric contracts, evals';
 
     -- ---------------------------------------------------------------
-    -- Теги. Ими в Фазе 8 размечается всё созданное; каталог и DQ-скоркарта
+    -- Теги. Тексты COMMENT — по-английски: это метаданные, которые читает
+    -- и человек, и агент, и они же уедут в каталог. Ими в Фазе 8 размечается всё созданное; каталог и DQ-скоркарта
     -- читают именно теги, а не отдельную табличку-дублёр.
     -- ---------------------------------------------------------------
 
     CREATE TAG IF NOT EXISTS RISK_GOV.META.DATA_DOMAIN
         ALLOWED_VALUES 'credit_risk', 'provisions', 'collections', 'origination', 'customer', 'finance', 'reference', 'governance'
-        COMMENT = 'Бизнес-домен объекта';
+        COMMENT = 'Business domain of the object';
 
     CREATE TAG IF NOT EXISTS RISK_GOV.META.DATA_OWNER
-        COMMENT = 'Владелец данных: подразделение, отвечающее за смысл и корректность';
+        COMMENT = 'Data owner: the unit accountable for meaning and correctness';
 
     CREATE TAG IF NOT EXISTS RISK_GOV.META.DATA_STEWARD
-        COMMENT = 'Стюард: конкретный человек, отвечающий за операционное качество';
+        COMMENT = 'Steward: the named person accountable for operational quality';
 
     CREATE TAG IF NOT EXISTS RISK_GOV.META.LAYER
         ALLOWED_VALUES 'ods', 'raw', 'dds', 'dm', 'tableau', 'prov', 'gov'
-        COMMENT = 'Слой архитектуры данных';
+        COMMENT = 'Data architecture layer';
 
     CREATE TAG IF NOT EXISTS RISK_GOV.META.CRITICALITY
         ALLOWED_VALUES 'tier1', 'tier2', 'tier3'
-        COMMENT = 'tier1 - питает отчётность или регуляторику, инцидент эскалируется немедленно';
+        COMMENT = 'tier1 - feeds management reporting or regulatory output, incidents escalate immediately';
 
     CREATE TAG IF NOT EXISTS RISK_GOV.META.CONTAINS_PII
         ALLOWED_VALUES 'yes', 'no'
-        COMMENT = 'Наличие персональных данных. Роль LLM_AGENT_RO к yes не допускается';
+        COMMENT = 'Presence of personal data. Role LLM_AGENT_RO is never granted access to yes';
 
     CREATE TAG IF NOT EXISTS RISK_GOV.META.SIGN_CONVENTION
         ALLOWED_VALUES 'negative_cost', 'positive_loss', 'not_applicable'
-        COMMENT = 'Знаковое соглашение колонки: negative_cost - факт COR, positive_loss - прогноз NPV';
+        COMMENT = 'Column sign convention: negative_cost - COR actuals, positive_loss - NPV forecast';
 
     CREATE TAG IF NOT EXISTS RISK_GOV.META.REFRESH_SLA_HOURS
-        COMMENT = 'Порог свежести в часах. Для weekday-only таблиц считается по рабочим дням из ODS.REF.HOLIDAYS';
+        COMMENT = 'Freshness threshold in hours. Weekday-only tables are measured in business days via ODS.REF.HOLIDAYS';
 
     CREATE TAG IF NOT EXISTS RISK_GOV.META.DEPRECATED_SINCE
-        COMMENT = 'Дата объявления объекта устаревшим. Наличие тега = объект нельзя использовать в новых запросах';
+        COMMENT = 'Date the object was deprecated. Presence of the tag means it must not be used in new queries';
 
     RETURN 'phase 1 ok';
 END;
