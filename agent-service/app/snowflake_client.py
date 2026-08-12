@@ -71,27 +71,38 @@ def session(tag: dict[str, Any] | None = None, mode: Mode = "reader") -> Iterato
     )
     try:
         cur = conn.cursor()
+
+        # Параметры сессии ставятся ПО ОДНОМУ и каждый со своим сообщением.
+        # Иначе отказ любого из них выглядит как один и тот же 399517
+        # (0A000, feature not supported) без указания виновника — на этом
+        # уже потерян один круг диагностики.
+        #
+        # Ни один из них не является границей безопасности: настоящий запрет
+        # записи — это права роли LLM_AGENT_RO. Поэтому отказ логируется и
+        # работа продолжается, но никогда не проглатывается молча.
+        setup: list[tuple[str, tuple[Any, ...], str]] = []
         if mode == "reader":
-            # Ставится до первого содержательного запроса и обратно не снимается.
-            #
-            # Аккаунт может не поддерживать выставление этого параметра через
-            # ALTER SESSION — тогда прилетает 399517 (0A000, feature not
-            # supported). Это ВТОРОЙ слой поверх прав роли, а не сама граница:
-            # LLM_AGENT_RO read-only независимо от него. Поэтому отказ не валит
-            # сессию, но и не проходит молча — в логе остаётся предупреждение,
-            # иначе однажды «второй слой есть» станет неотличимо от «его нет».
-            try:
-                cur.execute("ALTER SESSION SET CORTEX_CLIENT_READ_ONLY = TRUE")
-            except Exception as exc:
-                log.warning(
-                    "CORTEX_CLIENT_READ_ONLY не выставлен (%s). Запрет записи остаётся "
-                    "на правах роли %s — это настоящая граница, но клиентского "
-                    "дублирования сейчас нет",
-                    exc, role,
-                )
-        cur.execute(f"ALTER SESSION SET STATEMENT_TIMEOUT_IN_SECONDS = {cfg.query_timeout_s}")
+            setup.append((
+                "ALTER SESSION SET CORTEX_CLIENT_READ_ONLY = TRUE", (),
+                "клиентское дублирование read-only недоступно; запрет записи держится правами роли",
+            ))
+        setup.append((
+            f"ALTER SESSION SET STATEMENT_TIMEOUT_IN_SECONDS = {cfg.query_timeout_s}", (),
+            "таймаут запроса не выставлен; долгий запрос не будет прерван сам",
+        ))
         if tag:
-            cur.execute("ALTER SESSION SET QUERY_TAG = %s", (json.dumps(tag, ensure_ascii=False),))
+            setup.append((
+                "ALTER SESSION SET QUERY_TAG = %s", (json.dumps(tag, ensure_ascii=False),),
+                "QUERY_TAG не выставлен; аудит покажет 'агент спросил' без указания, кто попросил",
+            ))
+
+        for statement, params, consequence in setup:
+            name = statement.split("SET", 1)[1].split("=")[0].strip()
+            try:
+                cur.execute(statement, params)
+            except Exception as exc:
+                log.warning("параметр сессии %s не принят (%s) — %s", name, exc, consequence)
+
         cur.close()
         yield conn
     finally:
