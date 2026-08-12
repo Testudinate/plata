@@ -117,25 +117,115 @@
 
 <h3>1.1 Какие риски governance я вижу и как они ложатся на DMBoK</h3>
 
+<p>Ответ разделён на два состояния. <strong>ДО</strong> — то, что читается из приложений A–I
+и больше ниоткуда: каждая строка подкреплена цитатой с номером строки исходного файла
+(<code>C:7</code> = Appendix C, строка 7). <strong>ПОСЛЕ</strong> — что этому противопоставлено
+и <strong>каким запросом убедиться, что исправление существует</strong>, а не только заявлено.
+Нумерация <code>R1…R11</code> сквозная: строка первой таблицы и строка второй — один и тот же пункт.</p>
+
 <table>
-<tr><th style="width:26%">Риск</th><th style="width:24%">Дисциплина DMBoK</th><th>Свидетельство из приложений</th></tr>
-<tr><td><strong>Метрика без канона</strong></td><td>Data Quality Management, Metadata</td>
-<td>Три команды считают COR по трём формулам. Ни одна не помечена как основная.</td></tr>
-<tr><td><strong>Соглашения живут в головах</strong></td><td>Data Architecture, Metadata</td>
-<td>Знаки, зёрна, обязательные фильтры описаны прозой. Приложение C прямо предупреждает: неверный знак «молча даёт неверный результат».</td></tr>
-<tr><td><strong>Изменения без следа</strong></td><td>Change Management</td>
-<td>Дропнута <code>NPV_GEN5_PV_DETAILS</code>; переименована колонка фильтра; пересчитан Gen5v1. Ни одного механизма уведомления.</td></tr>
-<tr><td><strong>Каталог как проза</strong></td><td>Data Catalog</td>
-<td>Приложения читает человек. Ни машина, ни агент их не разбирают.</td></tr>
-<tr><td><strong>Владение не определено</strong></td><td>Data Governance</td>
-<td>Нигде не сказано, кто решает, каким должно быть число, и кого будить при сбое.</td></tr>
-<tr><td><strong>Референсные данные</strong></td><td>Reference Data Management</td>
-<td>Один продукт зовётся <code>CC</code>, <code>TDC</code> и <code>account_type='CC'</code>. Реально, но по условиям задания не приоритет.</td></tr>
+<tr><th style="width:4%">№</th><th style="width:21%">Риск</th><th style="width:20%">Дисциплина DMBoK</th><th>ДО — что реально написано в приложениях</th></tr>
+
+<tr><td><strong>R1</strong></td><td><strong>Метрика без канона</strong></td><td>Data Quality Management · Metadata</td>
+<td>Глоссарий определяет COR и тут же признаёт: «Three methodologies exist» (<code>E:13</code>). Выбор поколения отдан на усмотрение: Gen2 для кросс-юнитовых KPI, Gen3 для коллекшна (<code>G:24</code>). Ни одна формула не помечена основной, владельца определения нет.</td></tr>
+
+<tr><td><strong>R2</strong></td><td><strong>Знак — прозой</strong></td><td>Data Architecture · Data Quality Management</td>
+<td>«Different tables use different signs… Getting this wrong <strong>silently</strong> produces incorrect results» (<code>C:7</code>). Правило действует в 5+ таблицах, но существует только как абзац: исполняемой проверки нет.</td></tr>
+
+<tr><td><strong>R3</strong></td><td><strong>Разная колонка фильтра по схемам</strong></td><td>Data Architecture · Reference Data</td>
+<td><code>dm.*</code> фильтруется по <code>product_risks</code>, <code>tableau.*</code> — по <code>account_type</code> (<code>A:42</code>, <code>D:31</code>). «Using the wrong filter column returns no results or wrong data <strong>silently</strong>» (<code>A:47</code>).</td></tr>
+
+<tr><td><strong>R4</strong></td><td><strong>Ключевое правило продублировано трижды</strong></td><td>Metadata · Data Quality Management</td>
+<td><code>statement_num&nbsp;&gt;=&nbsp;2</code> + аннуализация <code>*&nbsp;12</code> записаны независимо в трёх приложениях (<code>C:99</code>, <code>D:27</code>, <code>F:53</code>). Три копии правила без единого источника — гарантированный дрейф при первой же правке.</td></tr>
+
+<tr><td><strong>R5</strong></td><td><strong>Структурное изменение без следа</strong></td><td>Change Management</td>
+<td><code>NPV_GEN5_PV_DETAILS</code> «was <strong>dropped</strong> in a recent refactor» — без даты, автора и списка затронутых (<code>G:47</code>). Отдельно: «no <code>first_utilization_date</code> column… <strong>it may</strong> reference a deprecated column» (<code>B:68</code>) — документация сама не знает, что произошло.</td></tr>
+
+<tr><td><strong>R6</strong></td><td><strong>Семантическое изменение без версии</strong></td><td>Change Management · Metadata</td>
+<td>«Gen5v1 has been <strong>re-estimated</strong>… materially shifted EL LT for some historical vintage cohorts» (<code>G:71</code>). Схема не менялась, ничего не упало — числа во всех дашбордах стали означать другое. Ни версии, ни даты, ни величины сдвига.</td></tr>
+
+<tr><td><strong>R7</strong></td><td><strong>Каталог как проза с висячими ссылками</strong></td><td>Data Catalog</td>
+<td>Приложения — markdown для человека. Внутри пять ссылок на файлы, которых в комплекте нет: <code>tables_technical.md</code> (<code>A:34</code>), <code>finance/gl_tables.md</code> (<code>A:26</code>), <code>finance/mxgaap_provisions.md</code> (<code>G:83</code>), <code>risk/pilots.md</code> (<code>H:73</code>), <code>tables_dm.md</code> (<code>D:23</code>).</td></tr>
+
+<tr><td><strong>R8</strong></td><td><strong>SLA без адресата и без действия</strong></td><td>Data Governance · Data Quality Management</td>
+<td>Таблица ожидаемой свежести есть (<code>B:70</code>), мониторинг ETL упомянут (<code>B:79</code>). Не сказано ни кто владелец числа, ни кого будить при нарушении, ни что считается нарушением. Владение во всех девяти приложениях не упомянуто ни разу.</td></tr>
+
+<tr><td><strong>R9</strong></td><td><strong>Референсные коды продукта</strong></td><td>Reference Data Management</td>
+<td>Один продукт: <code>TDC</code> «Equivalent to <code>'CC'</code> in other schemas» (<code>E:38</code>), при этом «BP "CC" includes GRZD_CLIPPED. In Snowflake… separate <code>PRODUCT_RISKS</code> values» (<code>C:62</code>). По условиям задания — не приоритет; фиксирую как реальный, но отложенный.</td></tr>
+
+<tr><td><strong>R10</strong></td><td><strong>PII как обычное обогащение</strong></td><td>Data Security · AI readiness</td>
+<td>Джойн к <code>ods.user_mgmt.USER_DATA</code> предложен рядовым паттерном: «Add demographics (gender, age, state)» (<code>F:29</code>). Ни классификации, ни ограничения роли, ни упоминания, что это персональные данные — при том что по этим же приложениям будет работать LLM-агент.</td></tr>
+
+<tr><td><strong>R11</strong></td><td><strong>Календарь: ложная тревога по расписанию</strong></td><td>Data Quality Management</td>
+<td>Статементные таблицы содержат только рабочие дни: «expecting weekend dates will <strong>always appear as stale</strong>» (<code>B:64</code>). Плюс требование считать мексиканские праздники (<code>D:23</code>). Мониторинг в календарных днях даёт ложное срабатывание каждый понедельник — так мониторинг теряет аудиторию.</td></tr>
 </table>
 
 <p>Самый дорогой класс — не тот, где запрос падает, а тот, где он <strong>отрабатывает и врёт</strong>.
-Неверная колонка фильтра, забытый <code>QUALIFY</code>, перепутанный знак — всё это даёт
-правдоподобное число, которое доходит до правления.</p>
+Из одиннадцати пунктов шесть (R1–R4, R6, R9) дают правдоподобное неверное число без единой
+ошибки исполнения. Приложения предупреждают об этом дважды словом «silently» — и оба раза
+предупреждение адресовано памяти читателя, а не проверке.</p>
+
+<h3>1.1-бис ПОСЛЕ: чем закрыт каждый пункт и как убедиться</h3>
+
+<p>Каждая строка проверяется одним запросом. Запросы выполняются под ролью
+<code>LLM_AGENT_RO</code> — то есть доступны и человеку, и агенту.</p>
+
+<table>
+<tr><th style="width:4%">№</th><th style="width:27%">Что противопоставлено</th><th style="width:38%">Проверка факта — запрос</th><th>Что вернётся</th></tr>
+
+<tr><td><strong>R1</strong></td><td>Реестр метрик: канон + все прежние формулы со статусом <code>deprecated</code> (удалить их — значит спрятать, а не мигрировать)</td>
+<td><code>SELECT metric_id, status, version, numerator, denominator, annualization, owner FROM RISK_GOV.META.METRIC_DEFINITIONS</code></td>
+<td>4 строки: <code>COR_PCT_CC</code> и <code>EL_LT_CC</code> — <code>canonical</code>, две ведомственные — <code>deprecated</code>, у каждой указан владелец</td></tr>
+
+<tr><td><strong>R2</strong></td><td>Знаковые соглашения как данные: у каждого правила готовый предикат, из которого собирается DQ-проверка</td>
+<td><code>SELECT object_name, column_name, sign_convention, check_rule, source_doc FROM RISK_GOV.META.REF_SIGN_CONVENTION</code></td>
+<td>12 правил, у каждого <code>CHECK_RULE</code> вида <code>COR_PRNP&nbsp;&lt;=&nbsp;0</code> и ссылка на приложение-источник</td></tr>
+
+<tr><td><strong>R3</strong></td><td>Карточка таблицы с обязательной колонкой фильтра — машиночитаемо, рядом с данными</td>
+<td><code>SELECT object_name, product_filter_column, mandatory_filters, sign_convention FROM RISK_GOV.AGENT.TABLE_CARDS</code></td>
+<td>9 карточек: у <code>dm.*</code> — <code>product_risks</code>, у <code>tableau.*</code> — <code>account_type</code>; угадывать нечего</td></tr>
+
+<tr><td><strong>R4</strong></td><td>Единственный источник правила — контракт метрики; фильтр зашит внутрь агрегата, а не в комментарий</td>
+<td><code>SELECT metric_id, filters, agent_instruction FROM RISK_GOV.AGENT.METRIC_CONTRACTS</code></td>
+<td>Одна строка на метрику. Копий правила больше нет: приложения перестают быть источником</td></tr>
+
+<tr><td><strong>R5</strong></td><td>Журнал изменений + «надгробие» вместо исчезнувшего объекта: запрос к старому имени объясняет, что произошло</td>
+<td><code>SELECT * FROM RISK_DM.DM.NPV_GEN5_PV_DETAILS</code></td>
+<td>Не ошибка «object does not exist», а текст: дропнута 2026-05-01, колонки переехали в <code>NPV_GEN5_DETAILS</code>, см. <code>CHANGE_LOG</code> id&nbsp;=&nbsp;2</td></tr>
+
+<tr><td><strong>R6</strong></td><td>Реестр версий модели: пересчёт становится видимым событием с измеренной величиной сдвига</td>
+<td><code>SELECT model_id, model_version, status, affected_scope, el_lt_shift, validated_by FROM RISK_GOV.META.MODEL_REGISTRY</code></td>
+<td>6 версий Gen5. Строка <code>CHANGE_LOG</code> id&nbsp;=&nbsp;3: <code>change_type&nbsp;=&nbsp;'model'</code>, EL&nbsp;LT +35% на винтажах 2025&nbsp;H1, схема не менялась</td></tr>
+
+<tr><td><strong>R7</strong></td><td>Каталог строками поверх <code>INFORMATION_SCHEMA</code> + реестров; для агента — весь контекст одним запросом</td>
+<td><code>SELECT * FROM RISK_GOV.META.V_OBJECT_CATALOG</code><br><code>SELECT section, key, content FROM RISK_GOV.AGENT.V_AGENT_CONTEXT</code></td>
+<td>Объект, зерно, владелец, стюард, SLA, критичность, число строк. Контекст агента — 5 секций, ~3.4k токенов, висячих ссылок нет</td></tr>
+
+<tr><td><strong>R8</strong></td><td>Владение как три разделимые обязанности + порог и действие при нарушении</td>
+<td><code>SELECT object_name, data_owner, data_steward, technical_owner, sla_hours, sla_calendar, on_breach FROM RISK_GOV.META.OWNERSHIP</code></td>
+<td>14 объектов. <code>SLA_CALENDAR</code> различает календарные и рабочие дни, <code>ON_BREACH</code> — от «разбудить стюарда» до эскалации в CFO-офис</td></tr>
+
+<tr><td><strong>R9</strong></td><td>Справочник продукта со всеми алиасами и флагом принадлежности к «CC» бизнес-плана</td>
+<td><code>SELECT product_key, product_risks, account_type, aliases, in_bp_cc FROM RISK_GOV.META.REF_PRODUCT</code></td>
+<td>5 продуктов; <code>CC</code>, <code>TDC</code> и <code>account_type='CC'</code> сведены в один ключ, <code>GRZD_CLIPPED</code> помечен как входящий в BP&nbsp;«CC»</td></tr>
+
+<tr><td><strong>R10</strong></td><td>Два рубежа: агенту не выдан доступ к слою ODS вообще, поверх — маскирование на случай выдачи</td>
+<td><code>SHOW GRANTS TO ROLE LLM_AGENT_RO;</code><br><code>SHOW MASKING POLICIES IN ACCOUNT;</code></td>
+<td>53 гранта, среди них ни одного на базу <code>ODS</code>. Плюс <code>PII_TEXT_MASK</code> и <code>PII_DATE_MASK</code> (дата PII раскрывается до года — возрастные срезы живут, идентификация нет)</td></tr>
+
+<tr><td><strong>R11</strong></td><td>Свежесть статементных таблиц меряется в рабочих днях мексиканского календаря</td>
+<td><code>SELECT * FROM RISK_GOV.DQ.V_SCORECARD WHERE dimension = 'freshness'</code></td>
+<td>Светофор по объектам; для weekday-only таблиц отсчёт по <code>META.DIM_DATE.IS_BUSINESS_DAY</code>, понедельничной ложной тревоги нет</td></tr>
+</table>
+
+<div class="note">
+<b>Что здесь факт, а что предложение.</b> Колонка «ДО» — факт: это исходные приложения,
+проверяемые по номерам строк. Колонка «ПОСЛЕ» — факт <strong>в песочнице</strong>: все запросы
+выше выполняются и возвращают описанное. Для самой Plata это предложение — но предложение,
+у которого уже есть работающая реализация и цена: 2.67 кредита Snowflake.
+Разрыв между двумя состояниями измеряется одной строкой:
+<code>SELECT * FROM RISK_GOV.DQ.BUILD_ASSERTIONS WHERE NOT passed;</code> — сейчас пусто.
+</div>
 
 <h3>1.2 Как остановить рост расхождений</h3>
 
