@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Source Material Review</title>
+<style>
+  @page { size: A4; margin: 15mm 14mm 13mm 14mm; }
+  html { font-size: 9.5pt; }
+  body { font-family: "Liberation Sans", "DejaVu Sans", sans-serif; color: #1a1a1a; line-height: 1.36; margin: 0; }
+  h1 { font-size: 19pt; margin: 0 0 2mm 0; letter-spacing: -0.3pt; }
+  .sub { color: #555; font-size: 9.6pt; margin-bottom: 5mm; }
+  h2 { font-size: 12pt; margin: 5mm 0 2mm 0; padding-bottom: 1.2mm;
+       border-bottom: 1.6pt solid #8a1c1c; color: #8a1c1c; break-after: avoid; }
+  h3 { font-size: 10.2pt; margin: 3.4mm 0 1.2mm 0; color: #222; break-after: avoid; }
+  p { margin: 0 0 1.8mm 0; }
+  ul, ol { margin: 0 0 2.5mm 0; padding-left: 5mm; }
+  li { margin-bottom: 0.9mm; }
+  table { width: 100%; border-collapse: collapse; margin: 1.6mm 0 2.8mm 0; font-size: 8.1pt; break-inside: avoid; }
+  th { background: #f7ecec; text-align: left; padding: 1.2mm 1.6mm; border-bottom: 1pt solid #d8b8b8; font-weight: 600; }
+  td { padding: 1.1mm 1.6mm; border-bottom: 0.5pt solid #e6dede; vertical-align: top; }
+  .sev { white-space: nowrap; font-weight: 600; font-size: 7.6pt; }
+  .s1 { color: #8a1c1c; }
+  .s2 { color: #b06a00; }
+  .s3 { color: #666; }
+  .note { background: #fbf6f6; border-left: 2.5pt solid #8a1c1c; padding: 1.8mm 2.5mm;
+          margin: 2mm 0 2.8mm 0; font-size: 8.7pt; break-inside: avoid; }
+  .note b { color: #8a1c1c; }
+  .blue { background: #f5f8fb; border-left-color: #1f4e79; }
+  .blue b { color: #1f4e79; }
+  code { font-family: "DejaVu Sans Mono", monospace; font-size: 8.2pt; background: #f2f4f6; padding: 0.3mm 0.8mm; }
+  pre { font-family: "DejaVu Sans Mono", monospace; font-size: 7.8pt; background: #f5f6f8;
+        padding: 2mm; margin: 1.5mm 0 2.5mm 0; line-height: 1.3; break-inside: avoid; white-space: pre-wrap; }
+  .kpi { display: flex; gap: 3mm; margin: 3mm 0 4mm 0; }
+  .kpi div { flex: 1; border: 0.8pt solid #e0cfcf; border-radius: 1.5mm; padding: 2.2mm 2mm; text-align: center; }
+  .kpi .v { font-size: 14pt; font-weight: 700; color: #8a1c1c; display: block; line-height: 1.15; }
+  .kpi .l { font-size: 7.6pt; color: #555; }
+  .pagebreak { break-before: page; }
+  strong { font-weight: 600; }
+  .foot { color: #666; font-size: 8.2pt; }
+</style>
+</head>
+<body>
+
+<h1>Source Material Review</h1>
+<div class="sub">
+  Annex to the test assignment response · Plata · Group IRM · 12 August 2026<br>
+  What was found in Appendices A–I, the assignment text and the interview notes
+</div>
+
+<div class="note">
+<b>Why this document exists.</b> The assignment hands over the appendices as "day-one
+documentation" and asks for an assessment of the landscape. You cannot assess the landscape
+without reading the documentation itself: if the day-one document contains contradictions, then
+those contradictions — not the data — are the first thing a new analyst will hit. What follows is
+a full read-through: <strong>20 findings</strong>, each with a quote and a file and line reference.
+Some were found by reading, some by running the documented queries against reproduced data.
+</div>
+
+<div class="kpi">
+  <div><span class="v">20</span><span class="l">findings in the<br>source materials</span></div>
+  <div><span class="v">8</span><span class="l">rated critical</span></div>
+  <div><span class="v">5</span><span class="l">links to files<br>that do not exist</span></div>
+  <div><span class="v">3</span><span class="l">found only by<br>running queries</span></div>
+</div>
+
+<h2>Summary by class</h2>
+
+<table>
+<tr><th style="width:34%">Class</th><th class="sev" style="width:10%">Findings</th><th>Why it is dangerous</th></tr>
+<tr><td><strong>A. Contradictions between documents</strong></td><td>6</td><td>The reader picks one of two versions and does not know which one they picked</td></tr>
+<tr><td><strong>B. Omissions and dangling links</strong></td><td>5</td><td>The schema map is incomplete; half the cross-references lead nowhere</td></tr>
+<tr><td><strong>C. Examples that do not work as described</strong></td><td>4</td><td>A query copied from the documentation returns the wrong result</td></tr>
+<tr><td><strong>D. Subject-matter errors</strong></td><td>3</td><td>The calendar and the reference data are factually wrong</td></tr>
+<tr><td><strong>E. Methodology</strong></td><td>2</td><td>The statistics understate or overstate significance</td></tr>
+</table>
+
+<h2>A. Contradictions between documents</h2>
+
+<table>
+<tr><th style="width:6%">#</th><th style="width:15%">Where</th><th style="width:39%">What it says</th><th>The problem</th><th class="sev" style="width:9%">Severity</th></tr>
+
+<tr><td><strong>A1</strong></td><td>Appendix B,<br>lines 46 / 74 / 79</td>
+<td>"Data freshness: <strong>T-1</strong> (calendar days)" — and in the table below: "portfolio_cor … <strong>today − 2</strong>" — and further down: "portfolio_cor is typically T-1"</td>
+<td>Three statements about one table, two of them incompatible. The SLA threshold depends on the choice: monitoring at T-1 will alert every day, monitoring at T-2 will miss a full day of delay</td><td class="sev s1">critical</td></tr>
+
+<tr><td><strong>A2</strong></td><td>Appendix B<br>vs F</td>
+<td>B: <code>statement_id</code> in <code>portfolio_cor</code> is <code>TEXT</code>. F: <code>statement_id</code> is <code>Integer</code>, sourced from <code>ods.pf_engine.STATEMENTS</code></td>
+<td>This is the join key between layers. Different types produce either a cast error or an implicit cast that loses matches</td><td class="sev s1">critical</td></tr>
+
+<tr><td><strong>A3</strong></td><td>Appendix C, line 106<br>vs D, line 62</td>
+<td>C: <code>SUM(cor_prnp) / SUM(avg_balance_prnp_net) * 12</code>, labelled "Correct COR% by vintage".<br>D: <code>-SUM(a.cor_prnp) / …</code></td>
+<td>C has no minus sign, while <code>cor_prnp</code> is negative by the convention stated in Appendix C itself. <strong>An example labelled as correct returns a negative COR%.</strong> The same query also lacks the product filter that D has</td><td class="sev s1">critical</td></tr>
+
+<tr><td><strong>A4</strong></td><td>Appendix E, line 22<br>vs G, line 55</td>
+<td>E: the EL LT formula is <code>cor_predict_lt / bal_predict_lt</code>.<br>G: <code>SUM(cor_total_predict_lt) / SUM(bal_total_predict_lt)</code></td>
+<td>The columns are named differently. The glossary version will not compile</td><td class="sev s2">substantial</td></tr>
+
+<tr><td><strong>A5</strong></td><td>Assignment text<br>vs Appendix A</td>
+<td>Assignment: "20+ schemas across <strong>6 databases</strong>". Appendix A lists <strong>nine</strong> distinct database prefixes</td>
+<td>A discrepancy in the framing. The map contains 19 schemas — "20+" only holds if the unlisted <code>ods.ref</code> is added (see B1)</td><td class="sev s3">minor</td></tr>
+
+<tr><td><strong>A6</strong></td><td>Assignment, Part 2<br>vs Appendix H</td>
+<td>In the three-calculation table both Risk Analytics and Portfolio Monitoring are labelled "Gen3", differing only in formula and annualization</td>
+<td>Per Appendix H, the <code>cor</code> column in the challenger table <strong>excludes the 0-DPD bucket</strong>, whereas <code>cor_prnp</code> in the statement table does not. These are different numerators, not one model. Measured, the divergence contributes 0.2–0.5 pp</td><td class="sev s2">substantial</td></tr>
+</table>
+
+<h2>B. Omissions and dangling links</h2>
+
+<table>
+<tr><th style="width:6%">#</th><th style="width:15%">Where</th><th style="width:39%">What</th><th>The problem</th><th class="sev" style="width:9%">Severity</th></tr>
+
+<tr><td><strong>B1</strong></td><td>Appendix A</td>
+<td>The <code>ods.ref</code> schema is <strong>absent</strong> from the schema map (0 mentions), yet its <code>HOLIDAYS</code> table is documented in detail in Appendix B (3 mentions)</td>
+<td>The schema map that both humans and the agent navigate by is incomplete. And what is missing is not some technical schema but the calendar on which every business-day calculation depends</td><td class="sev s1">critical</td></tr>
+
+<tr><td><strong>B2</strong></td><td>Appendix B</td>
+<td><code>ods.ref.HOLIDAYS</code> is documented inside the file "DM Schema — Table Inventory"</td>
+<td>An ODS table described in a mart inventory. Anyone looking for it by layer will not find it</td><td class="sev s3">minor</td></tr>
+
+<tr><td><strong>B3</strong></td><td>A, D, G, H</td>
+<td>References to <code>tables_technical.md</code>, <code>tables_dm.md</code>, <code>finance/gl_tables.md</code>, <code>finance/mxgaap_provisions.md</code>, <code>risk/pilots.md</code></td>
+<td><strong>Five links, not one file.</strong> The appendices are extracts from a larger knowledge base, and the cross-references broke during extraction. For an agent such a link is a dead end with no error signal</td><td class="sev s2">substantial</td></tr>
+
+<tr><td><strong>B4</strong></td><td>Appendix H, line 32</td>
+<td>The formula <code>cor_total = cor_dlq_fact + cor_0_bucket</code>, while <code>cor_dlq_fact</code> and <code>cor_0_bucket</code> are absent from the key-column list of that same table</td>
+<td>The formula references columns that, per the documentation, do not exist. Additivity cannot be verified from the document</td><td class="sev s2">substantial</td></tr>
+
+<tr><td><strong>B5</strong></td><td>Appendix H</td>
+<td>"This decomposition avoids the <strong>known <code>cor_collection_fact</code> data issue</strong>"</td>
+<td>A known data defect is mentioned in a single phrase and described nowhere: not what it consists of, not how large it is, not when it will be fixed. The workaround is documented, the cause is not</td><td class="sev s1">critical</td></tr>
+</table>
+
+<h2>C. Examples that do not work as described</h2>
+
+<p class="foot">These findings came not from reading but from <strong>running the documented queries
+against reproduced data</strong>. They are invisible to the eye.</p>
+
+<table>
+<tr><th style="width:6%">#</th><th style="width:15%">Where</th><th style="width:39%">What is claimed</th><th>What actually happens</th><th class="sev" style="width:9%">Severity</th></tr>
+
+<tr><td><strong>C1</strong></td><td>Appendices A and D</td>
+<td>"Using the wrong filter column returns no results or wrong data <strong>silently</strong>"</td>
+<td>In Snowflake, referencing a non-existent column raises a <strong>compilation error</strong>, not an empty result. The miss can only be silent if the column physically exists — for example, if it survived a rename. The symptom is described correctly, the mechanism is not, and the description does not tell you what to look for</td><td class="sev s2">substantial</td></tr>
+
+<tr><td><strong>C2</strong></td><td>Appendix C, line 106</td>
+<td>The query is labelled "<code>-- Correct COR% by vintage</code>"</td>
+<td>It returns a <strong>negative</strong> percentage: the minus in front of the sum is missing. An analyst who copies the example gets a COR with a negative sign and will either flip it by hand or build the chart upside down</td><td class="sev s1">critical</td></tr>
+
+<tr><td><strong>C3</strong></td><td>Appendix B, the "business days in a month" query</td>
+<td>Returns <code>month_start</code> as the month</td>
+<td>It returns <code>TIMESTAMP_NTZ</code> rather than <code>DATE</code>: the string literal <code>'2026-01-01'</code> inside <code>DATEADD</code> is cast to a timestamp. Verified — joining the result on a <code>DATE</code> column yields no matches. The query itself runs; the error surfaces further down the chain</td><td class="sev s2">substantial</td></tr>
+
+<tr><td><strong>C4</strong></td><td>Appendix B, line 77</td>
+<td>The freshness table lists <code>dm_npv_gen5p_details</code></td>
+<td>No such object exists: everywhere else it is <code>dm.npv_gen5_details</code>. The stray <code>p</code> plus an underscore instead of a dot is probably a remnant of the former name <code>NPV_GEN5_PV_DETAILS</code>, which per Appendix G has been dropped</td><td class="sev s3">minor</td></tr>
+</table>
+
+<div class="pagebreak"></div>
+
+<h2>D. Subject-matter errors</h2>
+
+<table>
+<tr><th style="width:6%">#</th><th style="width:15%">Where</th><th style="width:39%">What it says</th><th>What is wrong</th><th class="sev" style="width:9%">Severity</th></tr>
+
+<tr><td><strong>D1</strong></td><td>Appendix B, line 97</td>
+<td>Among the holidays: "Inauguración (<strong>Dec 1</strong>, every 6 years)"</td>
+<td>The transfer of executive power in Mexico moved from 1 December to <strong>1 October</strong>, effective 2024. A calendar built from this description will place a non-business day in the wrong month once every six years and will miss the quarter in which write-offs fall</td><td class="sev s2">substantial</td></tr>
+
+<tr><td><strong>D2</strong></td><td>Appendix B, line 97</td>
+<td>In the same list: "Día de las Madres (<strong>May 10</strong>)"</td>
+<td>10 May is not a mandatory non-working day under Article 74 of the Federal Labour Law and, as far as I am aware, is not part of the CNBV banking calendar. An extra non-business day <strong>understates</strong> the number of business days in May and distorts the annualization of COR. This needs reconciliation against the official CNBV calendar — as does the whole list: it mixes statutory public holidays with banking ones (Semana Santa, 2 November, 12 December) without stating which source is authoritative</td><td class="sev s1">critical</td></tr>
+
+<tr><td><strong>D3</strong></td><td>Appendix E, line 9</td>
+<td>"BdC | Buro de Credito | Mexican credit bureau (<strong>Circulo de Credito</strong>)"</td>
+<td>Buró de Crédito and Círculo de Crédito are <strong>two different</strong> Mexican credit bureaus, not one entity with two names. The glossary line conflates them. Further down the same file, "BDC Trans Union Califica" adds an inconsistent spelling of the abbreviation</td><td class="sev s2">substantial</td></tr>
+</table>
+
+<h2>E. Methodology</h2>
+
+<table>
+<tr><th style="width:6%">#</th><th style="width:15%">Where</th><th style="width:39%">What it says</th><th>The problem</th><th class="sev" style="width:9%">Severity</th></tr>
+
+<tr><td><strong>E1</strong></td><td>Appendix D,<br>t-statistic</td>
+<td><code>cor%_std = cor_forecast% × sqrt(var_cor/cor² + var_bal/bal²)</code>, labelled "delta method for ratio variance estimation"</td>
+<td>The delta method for a ratio has a third term — the <strong>covariance</strong> of numerator and denominator. It is omitted here, i.e. COR and balance are treated as independent. They are strongly positively related, so the variance is overstated and the t-statistic understated: deviations that are significant will look insignificant. The independence assumption is not stated in the text</td><td class="sev s2">substantial</td></tr>
+
+<tr><td><strong>E2</strong></td><td>Appendix D</td>
+<td>The SQL example computes <code>actual_cor_pct</code> and <code>forecast_cor_pct</code> as <strong>positive</strong>. The Tableau formulas alongside make both <strong>negative</strong>. The t formula uses the Tableau variant</td>
+<td>Two sign conventions inside one appendix. Substituting the numbers from the SQL example into the t formula flips the sign — producing the conclusion "worse than plan" instead of "better than plan"</td><td class="sev s1">critical</td></tr>
+</table>
+
+<h2>F. Observations that are not errors</h2>
+
+<ul>
+<li><strong>Priority is not set by effect size.</strong> The rule "filter on
+<code>statement_num&nbsp;&gt;=&nbsp;2</code>" is repeated verbatim <strong>three times</strong> — in
+Appendices C, D and F. Measured on reproduced data, its contribution to the divergence between
+calculations is 0.05–0.24 pp, whereas the contribution of the grain choice is 2.1–2.7 pp — an
+order of magnitude larger, and mentioned nowhere. The warning is right, its weighting is not.</li>
+<li><strong>The interview notes contain speech-recognition artefacts</strong> and are not marked as
+a draft: "Axon EDC Disk Group", "diplomint coordinator", "Wisla/Voyager", "anpoints", "IChart,
+ISIT". Several employment periods are recorded as "unknown". To a human this is noise; to an LLM
+it is a source from which it will reproduce non-existent product names as fact. Such files should
+either be proofread or explicitly flagged as "machine transcript, not a source of truth".</li>
+<li><strong>Appendix I uses DMBoK loosely.</strong> It says "across the 11 DMBoK disciplines" and
+names Change Management and Data Catalog Management among the six tracked. DAMA DMBoK has eleven
+knowledge areas and neither of those is among them: the catalog falls under Metadata Management,
+change control under Data Governance. Reference and Master Data are <strong>one</strong> area in
+DMBoK and are split into two here. The assignment itself asks to "connect your proposals to DMBoK
+disciplines", so the terminology should either be aligned to the framework or honestly labelled as
+an in-house adaptation.</li>
+</ul>
+
+<div class="pagebreak"></div>
+
+<h2>How each class is caught systematically</h2>
+
+<p>The main observation from the read-through: <strong>the findings fall into classes, and each
+class needs its own detector</strong>. No single tool closes all twenty, and trying to close them
+all with an "attention to detail" review does not scale and rests on one person.</p>
+
+<table>
+<tr><th style="width:22%">Class of finding</th><th style="width:20%">Detector</th><th style="width:24%">Mechanics</th><th>What it closes from the list</th></tr>
+
+<tr><td>Document vs reality<br><span class="foot">columns and tables that do not exist</span></td>
+<td><strong>dbt + linter</strong>, deterministic</td>
+<td>Every name in the YAML descriptions is checked against <code>INFORMATION_SCHEMA</code>; the test fails on a mismatch</td>
+<td>A2, A4, B1, B4, C4</td></tr>
+
+<tr><td>SQL examples in the documentation</td>
+<td><strong>CI</strong>, deterministic</td>
+<td>Every code block in the documentation is executed against reference data and its result compared with the expectation. Examples become tests</td>
+<td>C2, C3 — and this is exactly how three of my findings were made</td></tr>
+
+<tr><td>Document vs document<br><span class="foot">contradictions between files</span></td>
+<td><strong>LLM validator</strong></td>
+<td>Poorly caught by code: it requires understanding that "T-1" and "today − 2" describe the same thing. The agent is given an explicit task: "find statements about the same object that are incompatible"</td>
+<td>A1, A3, A5, A6, E2</td></tr>
+
+<tr><td>Schema drift</td>
+<td><strong>DDL snapshot diff</strong></td>
+<td>The DDL hash is compared with the snapshot and with the change log. A changed hash with no log entry is an unregistered change</td>
+<td>the C1 class: a column that survived a rename</td></tr>
+
+<tr><td>Data drift<br><span class="foot">same schema, different numbers</span></td>
+<td><strong>data diff</strong></td>
+<td>Row-level comparison of model versions (<code>audit_helper.compare_relations</code>). Catches a model re-estimation — the class where nothing breaks</td>
+<td>the whole Part 3 scenario</td></tr>
+
+<tr><td>Subject-matter facts<br><span class="foot">calendar, reference data</span></td>
+<td><strong>reconciliation with an external source</strong></td>
+<td>The calendar is not hand-written but loaded from the authoritative source (CNBV) and reconciled annually</td>
+<td>D1, D2</td></tr>
+
+<tr><td>Methodology</td>
+<td><strong>a human</strong>, with the LLM prompting</td>
+<td>The agent flags "assumption not stated"; the expert makes the call</td>
+<td>E1</td></tr>
+</table>
+
+<h3>What dbt specifically provides</h3>
+
+<p>A significant share of what I assembled by hand in the sandbox is replaced in production by
+native dbt mechanisms — and that is more honest than maintaining my own:</p>
+
+<table>
+<tr><th style="width:32%">Built by hand</th><th>dbt equivalent</th></tr>
+<tr><td>26 assertions in the <code>BUILD_ASSERTIONS</code> view</td><td>generic tests (<code>unique</code>, <code>not_null</code>, <code>accepted_values</code>, <code>relationships</code>) plus singular tests for semantics: sign in the aggregate, additivity, absence of weekends, zero COR on the first statement</td></tr>
+<tr><td>Consumer registry</td><td><code>exposures</code> — with type, owner and dependencies; change impact is computed from the graph rather than from a table</td></tr>
+<tr><td>Table and column comments</td><td><code>persist_docs</code> — descriptions live in YAML next to the model and are pushed to Snowflake <strong>automatically</strong>. One source instead of two</td></tr>
+<tr><td>DDL snapshot and drift detector</td><td><code>manifest.json</code> artefacts + <code>state:modified</code>: CI shows exactly what changed before it is applied</td></tr>
+<tr><td>Object catalog</td><td><code>dbt docs</code> — with a caveat: it covers models, not the whole warehouse. The ODS layer still has to be documented separately</td></tr>
+</table>
+
+<p>What dbt does <strong>not</strong> close: contradictions between prose documents, subject-matter
+errors in reference data, and anything outside the model graph. That remainder is exactly what the
+agent is for.</p>
+
+<h3>What the validator agent should look like</h3>
+
+<p>The key requirement: <strong>the validator is a separate role from the analyst</strong>. They
+have different jobs, different privileges and a different cost of error. The analyst answers
+questions and should be cautious; the validator hunts for discrepancies and should be pedantic.</p>
+
+<ol>
+<li><strong>Inputs:</strong> the documentation, <code>INFORMATION_SCHEMA</code>, the catalog, the
+change log and test results. Not text alone — otherwise there is nothing to reconcile against.</li>
+<li><strong>Four explicit tasks</strong> instead of a generic "check this": (1) execute every code
+example; (2) reconcile every object and column mentioned against reality; (3) find statements about
+the same object that contradict each other; (4) flag unstated assumptions.</li>
+<li><strong>Output:</strong> findings with file, line and quote — as in this document. Without a
+quote a finding is unverifiable and will be ignored.</li>
+<li><strong>Human triage of false positives.</strong> A validator whose findings are not filtered
+teaches the team to ignore it within two weeks — exactly like the Monday false freshness alarm.</li>
+<li><strong>The validator has its own golden set.</strong> Otherwise there is no one to validate
+the validator: feed it a document with twenty known defects and see how many it finds. This
+document is a ready-made set — twenty labelled findings with answers.</li>
+</ol>
+
+<div class="note blue">
+<b>What I would put into CI in the first week.</b> Ordered by benefit-to-effort, not by
+completeness.<br>
+<b>1.</b> Execution of every code example from the documentation against reference data. Cheapest
+of all, and it catches the most dangerous class — "copied from the document and got the wrong
+number".<br>
+<b>2.</b> Reconciliation of documented names against <code>INFORMATION_SCHEMA</code>. Catches A2,
+A4, B1, B4 and C4 with a single test.<br>
+<b>3.</b> DDL snapshot and reconciliation against the change log — already built and working.<br>
+<b>4.</b> LLM review for contradictions — weekly on a schedule rather than on every commit: it is
+the most expensive and the noisiest detector.
+</div>
+
+<h2>What I propose to do with the appendices themselves</h2>
+
+<p>Do not edit them. The appendices were issued as the terms of the assignment, and editing the
+terms to fit one's own implementation is a substitution. The right order is:</p>
+
+<ol>
+<li><strong>The eight critical findings</strong> (A1, A2, A3, B1, B5, C2, D2, E2) go into tickets
+raised against the documentation owner, with quotes — that is first-week work, not a matter for
+debate.</li>
+<li><strong>The negative COR% in Appendix C and the sign confusion in the t-statistic</strong>
+should be fixed first: they produce a wrong number silently.</li>
+<li><strong>The holiday calendar</strong> should be reconciled with the official CNBV source and
+moved from a hand-written list to a load.</li>
+<li><strong>The interview notes</strong> should be marked as a machine transcript — one line in the
+file header, against a high cost of error if an agent reads them.</li>
+</ol>
+
+<p class="foot" style="margin-top:4mm">
+Every quote is verifiable: file and line number are given for each finding.
+Three class C findings were obtained by running the documented queries against the sandbox
+<code>snowflake-sandbox/</code>; the rest by reading.
+</p>
+
+</body>
+</html>
