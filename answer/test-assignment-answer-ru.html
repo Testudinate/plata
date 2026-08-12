@@ -177,6 +177,25 @@
 <tr><td><strong>Technical owner</strong></td><td>Пайплайн и SLA загрузки</td><td>Инцидент заводится на него</td></tr>
 </table>
 
+<p>Принцип распределения: <strong>владелец — тот, кто несёт последствия неверного числа</strong>,
+а не тот, кто написал пайплайн. Отсюда конкретное закрепление.</p>
+
+<table>
+<tr><th style="width:30%">Домен данных</th><th style="width:20%">Владелец (смысл)</th><th style="width:22%">Стюард (качество)</th><th>Технический владелец</th></tr>
+<tr><td>Определения метрик риска: COR, EL LT, винтажи</td><td><strong>Group IRM</strong></td><td>Датамарт-аналитик 2</td><td>—</td></tr>
+<tr><td>Витрины <code>dm.*</code> и <code>tableau.*</code></td><td>Group IRM</td><td>Датамарт-аналитик 1</td><td>Group IRM</td></tr>
+<tr><td>Слой ODS и загрузка из источников</td><td>DWH Engineering</td><td>Дежурный DWH</td><td>DWH Engineering</td></tr>
+<tr><td>Провизии MxGAAP, регуляторная отчётность</td><td><strong>Finance</strong></td><td>Ведущий по провизиям</td><td>Group IRM</td></tr>
+<tr><td>Модели Gen2 / Gen3 / Gen5</td><td><strong>Risk Modelling</strong></td><td>Владелец модели</td><td>Group IRM</td></tr>
+<tr><td>Справочники и календарь</td><td>Group IRM</td><td>Датамарт-аналитик 2</td><td>DWH Engineering</td></tr>
+<tr><td>Контекст-слой для агентов</td><td>Group IRM</td><td>Лид (эта роль)</td><td>Group IRM</td></tr>
+</table>
+
+<p>Две развилки, которые стоит проговорить вслух. <strong>Провизии MxGAAP:</strong> считает их риск,
+но отвечает за них Finance — потому что подпись под регуляторной отчётностью ставит финансовый
+блок. <strong>Модели:</strong> витрина принадлежит риску, а смысл предсказания — моделированию;
+без этого разделения пересчёт модели становится ничьим изменением, что и произошло с Gen5v1.</p>
+
 <p>Владение реально только тогда, когда назван <strong>порог и действие при его нарушении</strong>.
 В реестре у каждого объекта есть поле «что делать при нарушении SLA» — от «разбудить стюарда»
 до «эскалировать в офис CFO, это вход регуляторной отчётности». Формулировка «ticket to DWH,
@@ -433,26 +452,82 @@ Snowflake Cortex дважды.<br><br>
 
 <h3>5.1 Где сейчас находится Plata</h3>
 
-<p>Использую лестницу DMBoK в трактовке «Basic → Defined → Controlled → Continuing improvement».
-Оценка — по свидетельствам из приложений A–H, а не по общему впечатлению.</p>
+<p>Appendix I разрешает взять определения DMBoK либо свою рабочую трактовку, но требует
+указать, какую. <strong>Использую собственную рабочую трактовку</strong> — она операционнее
+для этих четырёх дисциплин и проверяема наблюдением, а не самооценкой:</p>
 
 <table>
-<tr><th style="width:22%">Дисциплина</th><th style="width:14%">Уровень</th><th>Свидетельство</th></tr>
-<tr><td><strong>Data Quality Management</strong></td><td><strong>Basic</strong></td>
-<td>Приложения перечисляют ожидаемую свежесть таблиц, но нигде нет ни порогов, ни владельца сигнала, ни следа автоматической проверки. Формулировка «expecting weekend dates will always appear as stale» показывает, что ложные тревоги известны и с ними живут.</td></tr>
-<tr><td><strong>Change Management</strong></td><td><strong>Basic</strong></td>
-<td>Дропнутая таблица описана как факт с инструкцией «обновите запросы». Пересчёт модели — как предупреждение «имейте в виду». Ни уведомления, ни версионирования, ни оценки влияния.</td></tr>
-<tr><td><strong>Data Catalog</strong></td><td><strong>Defined</strong></td>
-<td>Документация существует, структурирована и содержательна — это заметно выше нуля. Но она для человека, не версионирована рядом с данными и не покрывает владение.</td></tr>
-<tr><td><strong>Reference Data Management</strong></td><td><strong>Defined</strong></td>
-<td>Коды продуктов согласованы внутри слоёв, расхождения (<code>TDC</code>, <code>GRZD_CLIPPED</code> в составе BP «CC») известны и задокументированы. Единого справочника нет.</td></tr>
+<tr><th style="width:22%">Уровень</th><th>Рабочее определение, единое для всех четырёх дисциплин</th></tr>
+<tr><td><strong>Basic</strong></td><td>Практика существует в головах. Ни порогов, ни владельца, ни следа. Проблема обнаруживается пользователем</td></tr>
+<tr><td><strong>Defined</strong></td><td>Правило записано и у него есть владелец. Соблюдение проверяется вручную и выборочно</td></tr>
+<tr><td><strong>Controlled</strong></td><td>Соблюдение проверяется автоматически, нарушение адресно эскалируется, отклонение фиксируется до того, как о нём узнает потребитель</td></tr>
+<tr><td><strong>Continuing improvement</strong></td><td>Измеряется сама система контроля: доля инцидентов, пойманных раньше пользователя, доля ложных срабатываний, время до исправления</td></tr>
 </table>
 
-<p>Про уверенность: по DQM и Change Management свидетельств достаточно и они однозначны.
-По каталогу оценка «Defined» опирается на сами приложения — я не видел, ведётся ли
-документация в git, как она обновляется и есть ли у неё владелец. Это первое, что я бы
-уточнил в первую неделю; если обновление ручное и нерегулярное, оценка сползает к Basic.</p>
+<p>Оценка ниже — по свидетельствам из приложений A–H, а не по общему впечатлению.</p>
 
+<table>
+<tr><th style="width:17%">Дисциплина</th><th style="width:11%">Уровень</th><th style="width:40%">Свидетельство</th><th>Насколько уверен и что бы собрал</th></tr>
+<tr><td><strong>Data Quality Management</strong></td><td><strong>Basic</strong></td>
+<td>Приложения перечисляют ожидаемую свежесть таблиц, но нигде нет ни порогов, ни владельца сигнала, ни следа автоматической проверки. Формулировка «expecting weekend dates will always appear as stale» показывает, что ложные тревоги известны и с ними живут.</td>
+<td><strong>Уверен.</strong> Свидетельство прямое. Дособрал бы одно: журнал инцидентов за квартал — чтобы отличить «проверок нет» от «проверки есть вне документации»</td></tr>
+<tr><td><strong>Change Management</strong></td><td><strong>Basic</strong></td>
+<td>Дропнутая таблица описана как факт с инструкцией «обновите запросы». Пересчёт модели — как предупреждение «имейте в виду». Ни уведомления, ни версионирования, ни оценки влияния.</td>
+<td><strong>Уверен.</strong> Проверил бы переписку по дропу <code>PV_DETAILS</code>: если уведомление было, но вне процесса, это Defined с нерабочей фиксацией, а не Basic</td></tr>
+<tr><td><strong>Data Catalog</strong></td><td><strong>Defined</strong></td>
+<td>Документация существует, структурирована и содержательна — это заметно выше нуля. Но она для человека, не версионирована рядом с данными и не покрывает владение.</td>
+<td><strong>Свидетельств мало.</strong> Оценка опирается на сами приложения. Нужно: ведётся ли документация в git, кто её обновляет и по какому триггеру. Если обновление ручное и нерегулярное — оценка сползает к Basic. Пять оборванных перекрёстных ссылок (см. приложение-ревизию) — довод в пользу Basic</td></tr>
+<tr><td><strong>Reference Data Management</strong></td><td><strong>Defined</strong></td>
+<td>Коды продуктов согласованы внутри слоёв, расхождения (<code>TDC</code>, <code>GRZD_CLIPPED</code> в составе BP «CC») известны и задокументированы. Единого справочника нет.</td>
+<td><strong>Свидетельств мало и они косвенные.</strong> Видны только продуктовые коды. Не видны справочники причин списания, кодов коллекшна, каналов. Собрал бы инвентарь всех enum-полей в <code>dm.*</code> и проверил, у скольких есть источник истины — это и есть настоящий замер RDM</td></tr>
+</table>
+
+
+
+
+<div style="display:flex; gap:5mm; align-items:center; margin:3mm 0 4mm 0; break-inside:avoid;">
+<svg viewBox="-42 42 384 218" style="width:88mm; height:50mm; flex:none;">
+  <g fill="none" stroke="#cfd8e2" stroke-width="1">
+    <polygon points="150,128.75 171.25,150 150,171.25 128.75,150"/>
+    <polygon points="150,107.5 192.5,150 150,192.5 107.5,150"/>
+    <polygon points="150,86.25 213.75,150 150,213.75 86.25,150"/>
+    <polygon points="150,65 235,150 150,235 65,150"/>
+  </g>
+  <g stroke="#cfd8e2" stroke-width="1">
+    <line x1="150" y1="150" x2="150" y2="65"/><line x1="150" y1="150" x2="235" y2="150"/>
+    <line x1="150" y1="150" x2="150" y2="235"/><line x1="150" y1="150" x2="65" y2="150"/>
+  </g>
+  <polygon points="150,107.5 192.5,150 150,192.5 107.5,150"
+           fill="#1f4e79" fill-opacity="0.10" stroke="#1f4e79" stroke-width="1.6" stroke-dasharray="4,3"/>
+  <polygon points="150,128.75 171.25,150 150,192.5 107.5,150"
+           fill="#8a1c1c" fill-opacity="0.16" stroke="#8a1c1c" stroke-width="2"/>
+  <g fill="#8a1c1c">
+    <circle cx="150" cy="128.75" r="3.2"/><circle cx="171.25" cy="150" r="3.2"/>
+    <circle cx="150" cy="192.5" r="3.2"/><circle cx="107.5" cy="150" r="3.2"/>
+  </g>
+  <g font-family="Liberation Sans, sans-serif" font-size="12" fill="#333" text-anchor="middle">
+    <text x="150" y="55">Data Quality</text>
+    <text x="150" y="252">Data Catalog</text>
+  </g>
+  <g font-family="Liberation Sans, sans-serif" font-size="12" fill="#333">
+    <text x="242" y="154" text-anchor="start">Change Mgmt</text>
+    <text x="58" y="154" text-anchor="end">Reference Data</text>
+  </g>
+  <g font-family="Liberation Sans, sans-serif" font-size="9.5" fill="#8f9aa6" text-anchor="middle">
+    <text x="150" y="126">1</text><text x="150" y="104">2</text>
+    <text x="150" y="83">3</text><text x="150" y="62">4</text>
+  </g>
+</svg>
+<div style="font-size:8.6pt">
+  <p style="margin-bottom:2mm"><span style="display:inline-block;width:5mm;height:2mm;background:#8a1c1c;opacity:0.5;border:1.4pt solid #8a1c1c;vertical-align:middle"></span>
+  &nbsp;<strong>сейчас</strong> — Data Quality 1, Change Management 1, Data Catalog 2, Reference Data 2</p>
+  <p style="margin-bottom:2mm"><span style="display:inline-block;width:5mm;height:2mm;border:1.4pt dashed #1f4e79;vertical-align:middle"></span>
+  &nbsp;<strong>цель 90 дней</strong> — Data Quality 2, Change Management 2; остальные без изменений <em>сознательно</em></p>
+  <p style="margin-bottom:0">Шкала: 1&nbsp;Basic · 2&nbsp;Defined · 3&nbsp;Controlled · 4&nbsp;Continuing improvement.
+  Форма фигуры и есть ответ на вопрос приоритизации: провал по вертикальной оси — те две дисциплины,
+  где отсутствие контроля обходится дороже всего, и именно их я двигаю первыми.</p>
+</div>
+</div>
 <h3>5.2 Две дисциплины, которые я двигаю первыми</h3>
 
 <p><strong>Data Quality Management и Change Management.</strong> Обоснование не только в том,
@@ -545,21 +620,13 @@ Snowflake Cortex дважды.<br><br>
 </ul>
 
 <h2>Приложение: воспроизводимость</h2>
-
 <p>Песочница собирается с нуля одиннадцатью скриптами примерно за десять минут и стоит
-2.67 кредита. Все утверждения этого документа проверяются запросами:</p>
-
-<table>
-<tr><th style="width:46%">Что проверить</th><th>Запрос</th></tr>
-<tr><td>Корректность сборки целиком</td><td><code>SELECT * FROM RISK_GOV.DQ.BUILD_ASSERTIONS WHERE NOT passed</code></td></tr>
-<tr><td>Три расчёта COR и мост между ними</td><td><code>SELECT * FROM RISK_GOV.DQ.V_COR_RECONCILIATION</code></td></tr>
-<tr><td>Светофор качества по семи измерениям</td><td><code>SELECT * FROM RISK_GOV.DQ.V_SCORECARD</code></td></tr>
-<tr><td>Каталог объектов</td><td><code>SELECT * FROM RISK_GOV.META.V_OBJECT_CATALOG</code></td></tr>
-<tr><td>Оценка влияния изменения</td><td><code>SELECT * FROM RISK_GOV.META.V_CHANGE_IMPACT</code></td></tr>
-<tr><td>Незалогированные изменения схемы</td><td><code>SELECT * FROM RISK_GOV.META.V_SCHEMA_DRIFT</code></td></tr>
-<tr><td>Весь контекст для агента</td><td><code>SELECT * FROM RISK_GOV.AGENT.V_AGENT_CONTEXT</code></td></tr>
-</table>
-
+2.67 кредита. Любое утверждение этого документа проверяется одним запросом:
+корректность сборки — <code>RISK_GOV.DQ.BUILD_ASSERTIONS</code>, мост между расчётами —
+<code>V_COR_RECONCILIATION</code>, светофор качества — <code>V_SCORECARD</code>, каталог —
+<code>V_OBJECT_CATALOG</code>, оценка влияния изменения — <code>V_CHANGE_IMPACT</code>,
+незарегистрированные изменения схемы — <code>V_SCHEMA_DRIFT</code>, контекст для агента —
+<code>AGENT.V_AGENT_CONTEXT</code>.</p>
 <p class="foot">Объём песочницы: 10 баз, 23 схемы, 59 таблиц, 15 вью, 1 семантическая вью,
 8 141 114 строк, 0.307 ГБ. Скрипты и документация — в репозитории, каталог
 <code>snowflake-sandbox/</code>.</p>
