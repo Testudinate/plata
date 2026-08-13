@@ -142,28 +142,43 @@ def question(surface: str, user: str | None, text: str) -> Iterator[Any]:
         "tags": tags,
     }
 
-    # ФАКТИЧЕСКИЙ API 4.14, снятый с живого клиента, а не из памяти:
+    # ФАКТИЧЕСКИЙ API 4.14, снятый с живого клиента:
     #   client: start_as_current_observation, start_observation,
-    #           update_current_span, update_current_generation
+    #           update_current_span, update_current_generation,
+    #           set_current_trace_io, score_current_trace
     #   span:   update, end, start_observation, score_trace, set_trace_io
-    # Ни propagate_attributes, ни update_current_trace, ни span.update_trace
-    # в этой ветке НЕТ — обе мои прошлые попытки были мимо. Остаётся один
-    # путь: атрибуты трейса передаются в корневой observation при создании.
-    # Если ветка SDK их не примет, пересоздаём без них: трейс без разметки
-    # лучше, чем отсутствие трейса.
+    #
+    # Ни update_current_trace, ни span.update_trace на клиенте и span НЕТ.
+    # Три попытки поставить теги провалились, потому что я каждый раз искал
+    # метод там, где его нет. Поэтому здесь перебор всех мыслимых мест —
+    # включая уровень МОДУЛЯ, куда я не смотрел ни разу, — и лог того, что
+    # реально сработало. Разметка не критична: трейс без тегов лучше, чем
+    # его отсутствие, поэтому ни один отказ не мешает работе.
     def _open(**extra):
         return lf.start_as_current_observation(
             name=f"copilot.ask:{surface}", as_type="span", input={"question": text}, **extra
         )
 
+    import langfuse as _lf_module
+    propagate = getattr(_lf_module, "propagate_attributes", None) or getattr(lf, "propagate_attributes", None)
+
     try:
         with ExitStack() as stack:
+            applied = None
+            if propagate is not None:
+                try:
+                    stack.enter_context(propagate(**trace_attrs))
+                    applied = "propagate_attributes"
+                except Exception:
+                    log.debug("propagate_attributes не принял атрибуты", exc_info=True)
+
             try:
                 span = stack.enter_context(_open(**trace_attrs))
-                _note_tagging("kwargs корневого observation")
+                applied = applied or "kwargs корневого observation"
             except TypeError:
                 span = stack.enter_context(_open())
-                _note_tagging("разметка не поддерживается этой веткой SDK")
+
+            _note_tagging(applied or "разметка не поддерживается этой веткой SDK")
             yield span
     except Exception:
         global _warned
@@ -263,7 +278,13 @@ def selftest() -> int:
         print("5. пробный трейс:       пропущен, клиент не создан")
         return 1
 
-    print(f"5. методы клиента:      {', '.join(sorted(m for m in dir(lf) if not m.startswith('_')))}")
+    import inspect
+    import langfuse as _m
+    print(f"5. модуль langfuse:     {', '.join(sorted(n for n in dir(_m) if not n.startswith('_')))}")
+    try:
+        print(f"   сигнатура старта:    {inspect.signature(lf.start_as_current_observation)}")
+    except Exception as exc:
+        print(f"   сигнатура старта:    не читается — {exc}")
 
     try:
         attrs = getattr(lf, "propagate_attributes", None)
