@@ -89,6 +89,10 @@ def _diagnose(exc: Exception) -> str:
         return "Контейнер не может прочитать ключ: chown 10001:10001 на файле ключа"
     if "does not exist or not authorized" in text:
         return "Роль подключилась, но не видит объект: не хватает грантов из части B"
+    if "000630" in text or "statement or warehouse timeout" in text.lower():
+        return ("Запрос не уложился в таймаут. Прогон агента идёт 20-60 секунд, а под "
+                "нагрузкой дольше: поднимите COPILOT_QUERY_TIMEOUT в .env или дождитесь "
+                "окончания параллельного прогона eval")
     if "399517" in text or "0A000" in text:
         return ("Аккаунт не принимает один из параметров сессии (feature not supported). "
                 "Аутентификация при этом уже прошла — смотрите предупреждения в логе api")
@@ -97,7 +101,15 @@ def _diagnose(exc: Exception) -> str:
 
 @app.post("/ask", response_model=AskResponse, dependencies=[Depends(require_key)])
 def ask(request: AskRequest) -> AskResponse:
-    result = copilot.ask(request.question, surface=request.surface, user=request.user)
+    # Отказ Snowflake обязан доехать до пользователя текстом, а не превратиться
+    # в 500. В чате «Server error 500» неотличимо от «бот сломался», хотя
+    # причина обычно одна и понятная — запрос не уложился в таймаут.
+    try:
+        result = copilot.ask(request.question, surface=request.surface, user=request.user)
+    except Exception as exc:
+        log.warning("вопрос не выполнен: %s", exc)
+        return AskResponse(answer="", tools=[], sql=[], lint=[], latency_s=0.0, error=_diagnose(exc))
+
     if result["error"]:
         log.warning("агент вернул ошибку: %s", result["error"])
     return AskResponse(
