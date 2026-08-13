@@ -28,7 +28,7 @@ from __future__ import annotations
 
 import logging
 import os
-from contextlib import contextmanager
+from contextlib import ExitStack, contextmanager
 from typing import Any, Iterator
 
 log = logging.getLogger(__name__)
@@ -107,30 +107,38 @@ def model_name(response_json: dict[str, Any]) -> str:
 def question(surface: str, user: str | None, text: str) -> Iterator[Any]:
     """Корневой observation на один вопрос. Без Langfuse — пустой контекст.
 
-    ВАЖНО про API 4.x: контекст задаётся только `start_as_current_span`.
-    Первая редакция звала `start_span` и следом `update_current_trace` — span
-    при этом создаётся, но текущим НЕ становится, поэтому user_id, session_id
-    и теги тихо не приезжали. Ошибка бесшумная: трейс в интерфейсе есть,
-    разметки на нём нет.
+    ПРО API 4.x, дважды поправленный. В модели данных v4 трейса как отдельной
+    сущности нет: трейс — это корневой observation. Отсюда два следствия,
+    на которых я споткнулся по очереди:
+
+    1. Метод один — `start_as_current_observation(as_type=...)`. Ни
+       `start_span`, ни `start_as_current_span` в 4.14 не существует.
+    2. `user_id`, `session_id` и теги относятся к трейсу, а не к observation,
+       поэтому ставятся `propagate_attributes` — контекстом, который
+       наследуют все вложенные шаги. `update_current_trace` в этой ветке нет.
+
+    Оба факта записаны в hermes-memory/CLAUDE.md и стоили там отдельной
+    итерации. Здесь они стоили ещё одной.
     """
     lf = client()
     if lf is None:
         yield None
         return
 
+    tags = [surface] + (["eval"] if surface == "eval" else [])
+    attrs = getattr(lf, "propagate_attributes", None)
+
     try:
-        with lf.start_as_current_span(name="copilot.ask", input={"question": text}) as span:
-            try:
-                # Без тегов eval-прогоны неотличимы от живых вопросов, и через
-                # неделю в Langfuse будет 90% синтетики.
-                lf.update_current_trace(
-                    name=f"copilot:{surface}",
+        with ExitStack() as stack:
+            if attrs is not None:
+                stack.enter_context(attrs(
                     user_id=user or "anonymous",
                     session_id=f"{surface}:{user or 'anonymous'}",
-                    tags=[surface] + (["eval"] if surface == "eval" else []),
-                )
-            except Exception:
-                log.debug("не удалось разметить трейс", exc_info=True)
+                    tags=tags,
+                ))
+            span = stack.enter_context(lf.start_as_current_observation(
+                name=f"copilot.ask:{surface}", as_type="span", input={"question": text},
+            ))
             yield span
     except Exception:
         log.debug("трейс не открылся, продолжаем без него", exc_info=True)
@@ -148,8 +156,9 @@ def record_agent_run(span: Any, response_json: dict[str, Any], parsed: dict[str,
         total_tokens = usage["input"] + usage["output"]
         cost = {"total": total_tokens / 1_000_000 * rate} if rate and total_tokens else None
 
-        with lf.start_as_current_generation(
+        with lf.start_as_current_observation(
             name="cortex.data_agent_run",
+            as_type="generation",
             model=model_name(response_json),
             input={"tools_available": ["cor_metrics", "risk_docs", "sql_exec"]},
         ) as generation:
@@ -215,8 +224,13 @@ def selftest() -> int:
         return 1
 
     try:
-        with lf.start_as_current_span(name="selftest", input={"probe": "plata-copilot"}) as span:
-            lf.update_current_trace(name="plata-copilot:selftest", tags=["selftest"])
+        attrs = getattr(lf, "propagate_attributes", None)
+        with ExitStack() as stack:
+            if attrs is not None:
+                stack.enter_context(attrs(user_id="selftest", session_id="selftest", tags=["selftest"]))
+            span = stack.enter_context(lf.start_as_current_observation(
+                name="plata-copilot:selftest", as_type="span", input={"probe": "plata-copilot"},
+            ))
             span.update(output={"ok": True})
         lf.flush()
         print("5. пробный трейс:       отправлен и дожат (flush)")
