@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plata — Solution Architecture</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      background: #020617; min-height: 100vh; padding: 2rem; color: white;
+    }
+    .container { max-width: 1240px; margin: 0 auto; }
+    .header { margin-bottom: 2rem; }
+    .header-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem; }
+    .pulse-dot { width: 12px; height: 12px; background: #22d3ee; border-radius: 50%; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.025em; }
+    .subtitle { color: #94a3b8; font-size: 0.875rem; margin-left: 1.75rem; }
+    .legend { margin-left: 1.75rem; margin-top: 0.75rem; display: flex; gap: 1.25rem; flex-wrap: wrap; font-size: 0.75rem; color: #94a3b8; }
+    .legend span { display: flex; align-items: center; gap: 0.4rem; }
+    .swatch { width: 10px; height: 10px; border-radius: 2px; }
+    .diagram-container {
+      background: rgba(15, 23, 42, 0.5); border-radius: 1rem; border: 1px solid #1e293b;
+      padding: 1.5rem; overflow-x: auto;
+    }
+    svg { width: 100%; min-width: 1140px; display: block; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; margin-top: 2rem; }
+    .card { background: rgba(15, 23, 42, 0.5); border-radius: 0.75rem; border: 1px solid #1e293b; padding: 1.25rem; }
+    .card-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; }
+    .card-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .card-dot.cyan { background: #22d3ee; }
+    .card-dot.emerald { background: #34d399; }
+    .card-dot.violet { background: #a78bfa; }
+    .card-dot.pink { background: #f472b6; }
+    .card-dot.amber { background: #fbbf24; }
+    .card-dot.slate { background: #94a3b8; }
+    .card h3 { font-size: 0.875rem; font-weight: 600; }
+    .card ul { list-style: none; color: #94a3b8; font-size: 0.75rem; }
+    .card li { margin-bottom: 0.375rem; }
+    .card li b { color: #e2e8f0; font-weight: 600; }
+    .footer { text-align: center; margin-top: 1.5rem; color: #475569; font-size: 0.75rem; line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="header-row">
+        <div class="pulse-dot"></div>
+        <h1>Plata — Solution Architecture</h1>
+      </div>
+      <p class="subtitle">Risk Data Governance Lead · what the assignment asked for, and what was built beyond it · 13 Aug 2026</p>
+      <div class="legend">
+        <span><i class="swatch" style="background:#22d3ee"></i> reproduced landscape (Appendices A–I)</span>
+        <span><i class="swatch" style="background:#34d399"></i> the assignment answer: governance layer</span>
+        <span><i class="swatch" style="background:#fbbf24"></i> beyond the brief: native Snowflake</span>
+        <span><i class="swatch" style="background:#a78bfa"></i> beyond the brief: VPS stack</span>
+      </div>
+    </div>
+
+    <div class="diagram-container">
+      <svg viewBox="0 0 1200 1080">
+        <defs>
+          <marker id="ah" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#64748b"/>
+          </marker>
+          <marker id="ahA" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#fbbf24"/>
+          </marker>
+          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="0.5"/>
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#grid)"/>
+
+        <!-- ================= LANDSCAPE ================= -->
+        <rect x="30" y="26" width="1140" height="118" rx="12" fill="rgba(34,211,238,0.05)" stroke="#22d3ee" stroke-width="1" stroke-dasharray="8,4"/>
+        <text x="46" y="46" fill="#22d3ee" font-size="10" font-weight="600">LANDSCAPE FROM APPENDICES A–I · rebuilt in Snowflake: 10 databases · 23 schemas · 59 tables · 8.1M rows · 26 correctness assertions</text>
+
+        <rect x="48" y="60" width="205" height="68" rx="8" fill="#0f172a" stroke="#22d3ee" stroke-width="1"/>
+        <text x="60" y="80" fill="#e2e8f0" font-size="12" font-weight="600">ODS</text>
+        <text x="60" y="98" fill="#94a3b8" font-size="9">pc_kernel · pf_engine · ref</text>
+        <text x="60" y="112" fill="#94a3b8" font-size="9">user_mgmt (PII, closed to the agent)</text>
+
+        <rect x="268" y="60" width="205" height="68" rx="8" fill="#0f172a" stroke="#22d3ee" stroke-width="1"/>
+        <text x="280" y="80" fill="#e2e8f0" font-size="12" font-weight="600">RISK_DM.DM</text>
+        <text x="280" y="98" fill="#94a3b8" font-size="9">stm_cor_cc · portfolio_cor</text>
+        <text x="280" y="112" fill="#94a3b8" font-size="9">npv_gen5_details · accounts</text>
+
+        <rect x="488" y="60" width="205" height="68" rx="8" fill="#0f172a" stroke="#22d3ee" stroke-width="1"/>
+        <text x="500" y="80" fill="#e2e8f0" font-size="12" font-weight="600">RISK_DM.TABLEAU</text>
+        <text x="500" y="98" fill="#94a3b8" font-size="9">cor_challenger · clip_*</text>
+        <text x="500" y="112" fill="#94a3b8" font-size="9">filters on account_type, not product</text>
+
+        <rect x="708" y="60" width="205" height="68" rx="8" fill="#0f172a" stroke="#22d3ee" stroke-width="1"/>
+        <text x="720" y="80" fill="#e2e8f0" font-size="12" font-weight="600">RISK_PROV.PROV</text>
+        <text x="720" y="98" fill="#94a3b8" font-size="9">MXGAAP_PROV_CC · ADD_PROV</text>
+        <text x="720" y="112" fill="#94a3b8" font-size="9">regulatory provisions</text>
+
+        <rect x="928" y="60" width="224" height="68" rx="8" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+        <text x="940" y="80" fill="#94a3b8" font-size="12" font-weight="600">6 peripheral databases</text>
+        <text x="940" y="98" fill="#64748b" font-size="9">risk_legacy · risk_rds · pos_prod</text>
+        <text x="940" y="112" fill="#64748b" font-size="9">credit/collection/payments_prod</text>
+
+        <line x1="600" y1="144" x2="600" y2="176" stroke="#64748b" stroke-width="1.5" marker-end="url(#ah)"/>
+
+        <!-- ================= RISK_GOV ================= -->
+        <rect x="30" y="180" width="1140" height="252" rx="12" fill="rgba(52,211,153,0.05)" stroke="#34d399" stroke-width="1" stroke-dasharray="8,4"/>
+        <text x="46" y="200" fill="#34d399" font-size="10" font-weight="600">RISK_GOV · THE ASSIGNMENT ANSWER · the governance layer absent from the appendices — the subject of the role itself</text>
+
+        <rect x="48" y="214" width="352" height="200" rx="8" fill="#0f172a" stroke="#34d399" stroke-width="1"/>
+        <text x="62" y="236" fill="#e2e8f0" font-size="12" font-weight="600">META · metadata and ownership</text>
+        <text x="62" y="258" fill="#94a3b8" font-size="9">METRIC_DEFINITIONS — canonical COR_PCT_CC v1.0</text>
+        <text x="62" y="274" fill="#94a3b8" font-size="9">MODEL_REGISTRY — Gen5 versions, EL LT deltas</text>
+        <text x="62" y="290" fill="#94a3b8" font-size="9">CHANGE_LOG — breaking? who must be told?</text>
+        <text x="62" y="306" fill="#94a3b8" font-size="9">CONSUMER_REGISTRY — 10 consumer links</text>
+        <text x="62" y="322" fill="#94a3b8" font-size="9">OWNERSHIP — owner and steward per object</text>
+        <text x="62" y="338" fill="#94a3b8" font-size="9">V_OBJECT_CATALOG · V_LINEAGE · V_SCHEMA_DRIFT</text>
+        <text x="62" y="360" fill="#64748b" font-size="9">Part 1 — landscape and ownership</text>
+        <text x="62" y="376" fill="#64748b" font-size="9">Part 3 — change management</text>
+        <text x="62" y="398" fill="#34d399" font-size="9">DBT_STAGE + PLATA_RISK_DBT — transformation layer</text>
+
+        <rect x="416" y="214" width="352" height="200" rx="8" fill="#0f172a" stroke="#34d399" stroke-width="1"/>
+        <text x="430" y="236" fill="#e2e8f0" font-size="12" font-weight="600">DQ · quality and drift</text>
+        <text x="430" y="258" fill="#94a3b8" font-size="9">BUILD_ASSERTIONS — 26 checks, all passing</text>
+        <text x="430" y="274" fill="#94a3b8" font-size="9">V_SCORECARD — 7 DMBoK dimensions, RAG status</text>
+        <text x="430" y="290" fill="#94a3b8" font-size="9">V_COR_RECONCILIATION — canon → 3 departmental</text>
+        <text x="430" y="306" fill="#94a3b8" font-size="9">DRIFT_INVARIANTS — sign invariants per bridge step</text>
+        <text x="430" y="322" fill="#94a3b8" font-size="9">V_COR_DRIFT — drift of the DEFINITION, not the book</text>
+        <text x="430" y="338" fill="#94a3b8" font-size="9">V_ALERT_CONDITIONS + ALERT_LOG — the queue</text>
+        <text x="430" y="360" fill="#64748b" font-size="9">Part 2 — metrics and data quality</text>
+        <text x="430" y="376" fill="#64748b" font-size="9">Part 5 — what moves first in 90 days</text>
+        <text x="430" y="398" fill="#34d399" font-size="9">14.62% — canonical COR for April 2026</text>
+
+        <rect x="784" y="214" width="368" height="200" rx="8" fill="#0f172a" stroke="#34d399" stroke-width="1"/>
+        <text x="798" y="236" fill="#e2e8f0" font-size="12" font-weight="600">AGENT · the LLM context layer</text>
+        <text x="798" y="258" fill="#94a3b8" font-size="9">TABLE_CARDS — 9 cards: grain, filter, sign, DO_NOT</text>
+        <text x="798" y="274" fill="#94a3b8" font-size="9">JOIN_GRAPH — 10 edges, exact ON plus its trap</text>
+        <text x="798" y="290" fill="#94a3b8" font-size="9">PITFALLS — 10 traps with executable detection_sql</text>
+        <text x="798" y="306" fill="#94a3b8" font-size="9">GLOSSARY — 17 terms resolved to objects</text>
+        <text x="798" y="322" fill="#94a3b8" font-size="9">METRIC_CONTRACTS — the only sanctioned formula</text>
+        <text x="798" y="338" fill="#94a3b8" font-size="9">EVAL_QUESTIONS — 16 golden questions with answers</text>
+        <text x="798" y="360" fill="#64748b" font-size="9">Part 4 — readiness for LLM agents</text>
+        <text x="798" y="376" fill="#94a3b8" font-size="9">SV_COR — semantic view: stmt≥2 inside the aggregate</text>
+        <text x="798" y="398" fill="#34d399" font-size="9">13,664 chars ≈ 3.4k tokens — fits in the prompt</text>
+
+        <line x1="968" y1="432" x2="968" y2="470" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#ahA)"/>
+        <line x1="592" y1="432" x2="592" y2="470" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#ahA)"/>
+        <line x1="224" y1="432" x2="224" y2="470" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#ahA)"/>
+
+        <!-- ================= NATIVE SNOWFLAKE ================= -->
+        <rect x="30" y="474" width="1140" height="160" rx="12" fill="rgba(251,191,36,0.05)" stroke="#fbbf24" stroke-width="1" stroke-dasharray="8,4"/>
+        <text x="46" y="494" fill="#fbbf24" font-size="10" font-weight="600">BEYOND THE BRIEF · NATIVE SNOWFLAKE — as of 12 Aug, every one of these object types existed in the account in quantity ZERO</text>
+
+        <rect x="48" y="508" width="212" height="108" rx="8" fill="#0f172a" stroke="#fbbf24" stroke-width="1"/>
+        <text x="60" y="528" fill="#e2e8f0" font-size="11" font-weight="600">Cortex Search</text>
+        <text x="60" y="546" fill="#94a3b8" font-size="9">CS_RISK_DOCS</text>
+        <text x="60" y="562" fill="#94a3b8" font-size="9">9 appendices + context layer</text>
+        <text x="60" y="578" fill="#94a3b8" font-size="9">86 chunks, one surface</text>
+        <text x="60" y="600" fill="#fbbf24" font-size="9">prose and contract in a single search</text>
+
+        <rect x="276" y="508" width="212" height="108" rx="8" fill="#0f172a" stroke="#fbbf24" stroke-width="1"/>
+        <text x="288" y="528" fill="#e2e8f0" font-size="11" font-weight="600">Cortex Agent</text>
+        <text x="288" y="546" fill="#94a3b8" font-size="9">RISK_COPILOT · 3 tools</text>
+        <text x="288" y="562" fill="#94a3b8" font-size="9">cor_metrics → SV_COR</text>
+        <text x="288" y="578" fill="#94a3b8" font-size="9">risk_docs → search · sql_exec</text>
+        <text x="288" y="600" fill="#fbbf24" font-size="9">takes the formula, never invents one</text>
+
+        <rect x="504" y="508" width="212" height="108" rx="8" fill="#0f172a" stroke="#fbbf24" stroke-width="1"/>
+        <text x="516" y="528" fill="#e2e8f0" font-size="11" font-weight="600">dbt Project</text>
+        <text x="516" y="546" fill="#94a3b8" font-size="9">PLATA_RISK_DBT</text>
+        <text x="516" y="562" fill="#94a3b8" font-size="9">11 tests, PASS=11 ERROR=0</text>
+        <text x="516" y="578" fill="#94a3b8" font-size="9">exposures = consumer registry</text>
+        <text x="516" y="600" fill="#fbbf24" font-size="9">the canon cannot be bypassed silently</text>
+
+        <rect x="732" y="508" width="212" height="108" rx="8" fill="#0f172a" stroke="#fbbf24" stroke-width="1"/>
+        <text x="744" y="528" fill="#e2e8f0" font-size="11" font-weight="600">Dynamic table</text>
+        <text x="744" y="546" fill="#94a3b8" font-size="9">DT_COR_MONTHLY</text>
+        <text x="744" y="562" fill="#94a3b8" font-size="9">TARGET_LAG = 1 day</text>
+        <text x="744" y="578" fill="#94a3b8" font-size="9">45 rows, April CC = 14.62</text>
+        <text x="744" y="600" fill="#fbbf24" font-size="9">timeliness held by the platform, not by us</text>
+
+        <rect x="960" y="508" width="192" height="108" rx="8" fill="#0f172a" stroke="#fbbf24" stroke-width="1"/>
+        <text x="972" y="528" fill="#e2e8f0" font-size="11" font-weight="600">Alert</text>
+        <text x="972" y="546" fill="#94a3b8" font-size="9">AL_RISK_GOV_WATCH</text>
+        <text x="972" y="562" fill="#94a3b8" font-size="9">daily, state = started</text>
+        <text x="972" y="578" fill="#94a3b8" font-size="9">4 condition sources</text>
+        <text x="972" y="600" fill="#fbbf24" font-size="9">the detector runs, not just designed</text>
+
+        <line x1="382" y1="634" x2="382" y2="676" stroke="#a78bfa" stroke-width="1.5" marker-end="url(#ah)"/>
+        <line x1="1056" y1="634" x2="1056" y2="676" stroke="#a78bfa" stroke-width="1.5" marker-end="url(#ah)"/>
+        <text x="392" y="660" fill="#64748b" font-size="9">DATA_AGENT_RUN</text>
+        <text x="900" y="660" fill="#64748b" font-size="9">ALERT_LOG queue →</text>
+
+        <!-- ================= VPS ================= -->
+        <rect x="30" y="680" width="1140" height="178" rx="12" fill="rgba(167,139,250,0.05)" stroke="#a78bfa" stroke-width="1" stroke-dasharray="8,4"/>
+        <text x="46" y="700" fill="#a78bfa" font-size="10" font-weight="600">BEYOND THE BRIEF · THIN VPS STACK (docker compose) — only what Snowflake does not provide lives outside it</text>
+
+        <rect x="48" y="714" width="252" height="126" rx="8" fill="#0f172a" stroke="#a78bfa" stroke-width="1"/>
+        <text x="60" y="734" fill="#e2e8f0" font-size="11" font-weight="600">plata-copilot-api</text>
+        <text x="60" y="752" fill="#94a3b8" font-size="9">FastAPI :8770, loopback only</text>
+        <text x="60" y="768" fill="#94a3b8" font-size="9">QUERY_TAG → audit down to a person</text>
+        <text x="60" y="784" fill="#94a3b8" font-size="9">lints SQL against the table cards</text>
+        <text x="60" y="800" fill="#94a3b8" font-size="9">/readyz says WHY it is not ready</text>
+        <text x="60" y="822" fill="#a78bfa" font-size="9">key-pair auth, key mode 400, uid 10001</text>
+
+        <rect x="316" y="714" width="252" height="126" rx="8" fill="#0f172a" stroke="#a78bfa" stroke-width="1"/>
+        <text x="328" y="734" fill="#e2e8f0" font-size="11" font-weight="600">plata-copilot-bot</text>
+        <text x="328" y="752" fill="#94a3b8" font-size="9">aiogram, chat_id allowlist</text>
+        <text x="328" y="768" fill="#94a3b8" font-size="9">/ask · /alerts · /help</text>
+        <text x="328" y="784" fill="#94a3b8" font-size="9">alert delivery + acknowledge button</text>
+        <text x="328" y="800" fill="#94a3b8" font-size="9">each answer replies to its own question</text>
+        <text x="328" y="822" fill="#a78bfa" font-size="9">not one formula, not one threshold</text>
+
+        <rect x="584" y="714" width="252" height="126" rx="8" fill="#0f172a" stroke="#a78bfa" stroke-width="1"/>
+        <text x="596" y="734" fill="#e2e8f0" font-size="11" font-weight="600">eval_agent · export_log</text>
+        <text x="596" y="752" fill="#94a3b8" font-size="9">16 golden questions, baseline</text>
+        <text x="596" y="768" fill="#94a3b8" font-size="9">--compare → exit 2 on regression</text>
+        <text x="596" y="784" fill="#94a3b8" font-size="9">breakdown by difficulty is mandatory</text>
+        <text x="596" y="800" fill="#94a3b8" font-size="9">transcript of questions and answers</text>
+        <text x="596" y="822" fill="#a78bfa" font-size="9">our own scoring = independent evidence</text>
+
+        <rect x="852" y="714" width="300" height="126" rx="8" fill="#0f172a" stroke="#a78bfa" stroke-width="1"/>
+        <text x="864" y="734" fill="#e2e8f0" font-size="11" font-weight="600">Two identities in Snowflake</text>
+        <text x="864" y="752" fill="#34d399" font-size="9">LLM_AGENT_RO — answers, cannot write</text>
+        <text x="864" y="768" fill="#34d399" font-size="9">COPILOT_WRITER — journals, sees no data</text>
+        <text x="864" y="784" fill="#94a3b8" font-size="9">WH_COPILOT + RM_COPILOT: cost isolated</text>
+        <text x="864" y="800" fill="#94a3b8" font-size="9">PII unreachable by grants, not by prompt</text>
+        <text x="864" y="822" fill="#a78bfa" font-size="9">the boundary is the role, not the instruction</text>
+
+        <line x1="442" y1="858" x2="442" y2="898" stroke="#f472b6" stroke-width="1.5" marker-end="url(#ah)"/>
+        <line x1="174" y1="858" x2="174" y2="898" stroke="#f472b6" stroke-width="1.5" stroke-dasharray="5,4" marker-end="url(#ah)"/>
+
+        <!-- ================= CONSUMERS ================= -->
+        <rect x="30" y="902" width="1140" height="140" rx="12" fill="rgba(244,114,182,0.05)" stroke="#f472b6" stroke-width="1" stroke-dasharray="8,4"/>
+        <text x="46" y="922" fill="#f472b6" font-size="10" font-weight="600">CONSUMERS · one and the same canon for humans and machines</text>
+
+        <rect x="48" y="936" width="252" height="88" rx="8" fill="#0f172a" stroke="#475569" stroke-width="1" stroke-dasharray="4,3"/>
+        <text x="60" y="956" fill="#94a3b8" font-size="11" font-weight="600">MCP for Claude Desktop</text>
+        <text x="60" y="974" fill="#64748b" font-size="9">the same surface the bot uses</text>
+        <text x="60" y="990" fill="#64748b" font-size="9">the account already has a native MCP server</text>
+        <text x="60" y="1010" fill="#64748b" font-size="9">planned, not built</text>
+
+        <rect x="316" y="936" width="252" height="88" rx="8" fill="#0f172a" stroke="#f472b6" stroke-width="1"/>
+        <text x="328" y="956" fill="#e2e8f0" font-size="11" font-weight="600">Telegram</text>
+        <text x="328" y="974" fill="#94a3b8" font-size="9">28 runs, 23 distinct questions</text>
+        <text x="328" y="990" fill="#94a3b8" font-size="9">the full A–I test plan was run through it</text>
+        <text x="328" y="1010" fill="#f472b6" font-size="9">live</text>
+
+        <rect x="584" y="936" width="252" height="88" rx="8" fill="#0f172a" stroke="#475569" stroke-width="1"/>
+        <text x="596" y="956" fill="#94a3b8" font-size="11" font-weight="600">Tableau</text>
+        <text x="596" y="974" fill="#64748b" font-size="9">COR and CLIP dashboards</text>
+        <text x="596" y="990" fill="#64748b" font-size="9">listed in the consumer registry</text>
+        <text x="596" y="1010" fill="#64748b" font-size="9">10 business days of notice</text>
+
+        <rect x="852" y="936" width="300" height="88" rx="8" fill="#0f172a" stroke="#475569" stroke-width="1"/>
+        <text x="864" y="956" fill="#94a3b8" font-size="11" font-weight="600">Management reporting · analysts</text>
+        <text x="864" y="974" fill="#64748b" font-size="9">monthly cycle, 20-day notice window</text>
+        <text x="864" y="990" fill="#64748b" font-size="9">~10 risk analysts</text>
+        <text x="864" y="1010" fill="#64748b" font-size="9">the same canon serves all of them</text>
+      </svg>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <div class="card-header"><div class="card-dot emerald"></div><h3>What answers the assignment</h3></div>
+        <ul>
+          <li><b>Part 1</b> — landscape rebuilt; ownership and consumers as tables</li>
+          <li><b>Part 2</b> — canonical COR_PCT_CC and the bridge to three departmental figures</li>
+          <li><b>Part 3</b> — model registry, change log, impact assessed by query</li>
+          <li><b>Part 4</b> — context layer: cards, joins, pitfalls, glossary, contracts</li>
+          <li><b>Part 5</b> — scorecard across 7 dimensions as the basis for prioritisation</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-dot amber"></div><h3>Beyond the brief — inside Snowflake</h3></div>
+        <ul>
+          <li>Cortex Search: documentation stopped being "won't fit in the prompt"</li>
+          <li>Cortex Agent: Part 4 turned from a description into behaviour</li>
+          <li>dbt: the one explicit job-spec requirement, answered in code</li>
+          <li>Alert: the Part 2.5 detector runs instead of being designed</li>
+          <li>Dynamic table: timeliness as a platform obligation</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-dot violet"></div><h3>Beyond the brief — outside Snowflake</h3></div>
+        <ul>
+          <li>Telegram bot: a reviewer asks their own question and gets a number with SQL</li>
+          <li>Regression with a baseline and <b>exit 2</b> on degradation</li>
+          <li>Transcript of the dialogue as an annex to the answer</li>
+          <li>Acceptance on both sides: 14/14 in Snowflake, PASS=17 on the VPS</li>
+          <li>Split identities: one answers, the other journals</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-dot pink"></div><h3>Four findings that required running it</h3></div>
+        <ul>
+          <li>The agent returned <b>14.94%</b> instead of 14.62 — silently blended CC with GRZD_CLIPPED</li>
+          <li>The first drift detector fired <b>33 times out of 33</b> — it watched the portfolio, not the definition</li>
+          <li>A dbt test found the canon and the semantic view disagreeing on two edge months</li>
+          <li>Calendar: 22 business days instead of 20 — no grant on ODS.REF.HOLIDAYS</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-dot cyan"></div><h3>Measurements</h3></div>
+        <ul>
+          <li>59 tables · 15 views · 1 semantic view · 8.1M rows</li>
+          <li>26 correctness assertions, 0 failures</li>
+          <li>Context layer: 50 records ≈ 3.4k tokens</li>
+          <li>Search: 86 chunks, ACTIVE/ACTIVE</li>
+          <li>Agent: 69 sessions, 5.35M tokens over 7 days</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-dot slate"></div><h3>Deliberately not done</h3></div>
+        <ul>
+          <li>The agent holds no write privilege under any circumstance</li>
+          <li>No two-way git ↔ Snowflake sync: the direction is one</li>
+          <li>No custom web UI: Telegram and MCP cover both audiences</li>
+          <li>No purchased catalog: the catalog is tables next to the data</li>
+          <li>Reference Data Management — out of scope for the first 90 days</li>
+        </ul>
+      </div>
+    </div>
+
+    <p class="footer">
+      Every figure above is a measurement from the live DX31435 account, not an estimate.<br>
+      Acceptance reproduces in two commands: <code>sql/15_acceptance.sql</code> and <code>agent-service/check_all.sh</code>.
+    </p>
+  </div>
+</body>
+</html>
