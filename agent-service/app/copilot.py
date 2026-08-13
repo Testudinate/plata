@@ -20,6 +20,7 @@ import time
 from typing import Any
 
 from . import snowflake_client as sf
+from . import tracing
 
 log = logging.getLogger(__name__)
 
@@ -131,15 +132,21 @@ def ask(question: str, surface: str = "api", user: str | None = None) -> dict[st
     tag = {"app": "plata-copilot", "surface": surface, "user": user or "anonymous"}
     started = time.monotonic()
 
-    rows = sf.fetch_all(
-        "SELECT SNOWFLAKE.CORTEX.DATA_AGENT_RUN(%s, %s) AS RESPONSE",
-        (cfg.agent_name, _agent_request(question)),
-        tag=tag,
-    )
-    raw = rows[0]["RESPONSE"] if rows else ""
-    parsed = _parse_response(raw)
-    parsed["latency_s"] = round(time.monotonic() - started, 2)
-    parsed["lint"] = lint_sql(parsed["sql"]) if not parsed["error"] else []
+    with tracing.question(surface, user, question) as span:
+        rows = sf.fetch_all(
+            "SELECT SNOWFLAKE.CORTEX.DATA_AGENT_RUN(%s, %s) AS RESPONSE",
+            (cfg.agent_name, _agent_request(question)),
+            tag=tag,
+        )
+        raw = rows[0]["RESPONSE"] if rows else ""
+        parsed = _parse_response(raw)
+        parsed["latency_s"] = round(time.monotonic() - started, 2)
+        parsed["lint"] = lint_sql(parsed["sql"]) if not parsed["error"] else []
+
+        try:
+            tracing.record_agent_run(span, json.loads(raw) if raw else {}, parsed, parsed["latency_s"])
+        except Exception:  # трейсинг не имеет права уронить ответ
+            log.debug("трейс прогона не записался", exc_info=True)
 
     try:
         sf.write(
