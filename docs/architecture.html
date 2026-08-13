@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plata — архитектура решения</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      background: #020617; min-height: 100vh; padding: 2rem; color: white;
+    }
+    .container { max-width: 1240px; margin: 0 auto; }
+    .header { margin-bottom: 2rem; }
+    .header-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem; }
+    .pulse-dot { width: 12px; height: 12px; background: #22d3ee; border-radius: 50%; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.025em; }
+    .subtitle { color: #94a3b8; font-size: 0.875rem; margin-left: 1.75rem; }
+    .legend { margin-left: 1.75rem; margin-top: 0.75rem; display: flex; gap: 1.25rem; flex-wrap: wrap; font-size: 0.75rem; color: #94a3b8; }
+    .legend span { display: flex; align-items: center; gap: 0.4rem; }
+    .swatch { width: 10px; height: 10px; border-radius: 2px; }
+    .diagram-container {
+      background: rgba(15, 23, 42, 0.5); border-radius: 1rem; border: 1px solid #1e293b;
+      padding: 1.5rem; overflow-x: auto;
+    }
+    svg { width: 100%; min-width: 1140px; display: block; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; margin-top: 2rem; }
+    .card { background: rgba(15, 23, 42, 0.5); border-radius: 0.75rem; border: 1px solid #1e293b; padding: 1.25rem; }
+    .card-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; }
+    .card-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .card-dot.cyan { background: #22d3ee; }
+    .card-dot.emerald { background: #34d399; }
+    .card-dot.violet { background: #a78bfa; }
+    .card-dot.pink { background: #f472b6; }
+    .card-dot.amber { background: #fbbf24; }
+    .card-dot.slate { background: #94a3b8; }
+    .card h3 { font-size: 0.875rem; font-weight: 600; }
+    .card ul { list-style: none; color: #94a3b8; font-size: 0.75rem; }
+    .card li { margin-bottom: 0.375rem; }
+    .card li b { color: #e2e8f0; font-weight: 600; }
+    .footer { text-align: center; margin-top: 1.5rem; color: #475569; font-size: 0.75rem; line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="header-row">
+        <div class="pulse-dot"></div>
+        <h1>Plata — архитектура решения</h1>
+      </div>
+      <p class="subtitle">Risk Data Governance Lead · что требовало ТЗ и что построено сверх него · 13.08.2026</p>
+      <div class="legend">
+        <span><i class="swatch" style="background:#22d3ee"></i> воспроизведённый ландшафт (приложения A–I)</span>
+        <span><i class="swatch" style="background:#34d399"></i> ответ на ТЗ: governance-слой</span>
+        <span><i class="swatch" style="background:#fbbf24"></i> сверх ТЗ: нативный Snowflake</span>
+        <span><i class="swatch" style="background:#a78bfa"></i> сверх ТЗ: стек на VPS</span>
+      </div>
+    </div>
+
+    <div class="diagram-container">
+      <svg viewBox="0 0 1200 1080">
+        <defs>
+          <marker id="ah" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#64748b"/>
+          </marker>
+          <marker id="ahA" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#fbbf24"/>
+          </marker>
+          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="0.5"/>
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#grid)"/>
+
+        <!-- ================= ЛАНДШАФТ ================= -->
+        <rect x="30" y="26" width="1140" height="118" rx="12" fill="rgba(34,211,238,0.05)" stroke="#22d3ee" stroke-width="1" stroke-dasharray="8,4"/>
+        <text x="46" y="46" fill="#22d3ee" font-size="10" font-weight="600">ЛАНДШАФТ ИЗ ПРИЛОЖЕНИЙ A–I · воспроизведён в Snowflake: 10 баз · 23 схемы · 59 таблиц · 8.1 млн строк · 26 утверждений корректности</text>
+
+        <rect x="48" y="60" width="205" height="68" rx="8" fill="#0f172a" stroke="#22d3ee" stroke-width="1"/>
+        <text x="60" y="80" fill="#e2e8f0" font-size="12" font-weight="600">ODS</text>
+        <text x="60" y="98" fill="#94a3b8" font-size="9">pc_kernel · pf_engine · ref</text>
+        <text x="60" y="112" fill="#94a3b8" font-size="9">user_mgmt (PII, агенту закрыт)</text>
+
+        <rect x="268" y="60" width="205" height="68" rx="8" fill="#0f172a" stroke="#22d3ee" stroke-width="1"/>
+        <text x="280" y="80" fill="#e2e8f0" font-size="12" font-weight="600">RISK_DM.DM</text>
+        <text x="280" y="98" fill="#94a3b8" font-size="9">stm_cor_cc · portfolio_cor</text>
+        <text x="280" y="112" fill="#94a3b8" font-size="9">npv_gen5_details · accounts</text>
+
+        <rect x="488" y="60" width="205" height="68" rx="8" fill="#0f172a" stroke="#22d3ee" stroke-width="1"/>
+        <text x="500" y="80" fill="#e2e8f0" font-size="12" font-weight="600">RISK_DM.TABLEAU</text>
+        <text x="500" y="98" fill="#94a3b8" font-size="9">cor_challenger · clip_*</text>
+        <text x="500" y="112" fill="#94a3b8" font-size="9">фильтр account_type, не product</text>
+
+        <rect x="708" y="60" width="205" height="68" rx="8" fill="#0f172a" stroke="#22d3ee" stroke-width="1"/>
+        <text x="720" y="80" fill="#e2e8f0" font-size="12" font-weight="600">RISK_PROV.PROV</text>
+        <text x="720" y="98" fill="#94a3b8" font-size="9">MXGAAP_PROV_CC · ADD_PROV</text>
+        <text x="720" y="112" fill="#94a3b8" font-size="9">регуляторные провизии</text>
+
+        <rect x="928" y="60" width="224" height="68" rx="8" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+        <text x="940" y="80" fill="#94a3b8" font-size="12" font-weight="600">6 периферийных баз</text>
+        <text x="940" y="98" fill="#64748b" font-size="9">risk_legacy · risk_rds · pos_prod</text>
+        <text x="940" y="112" fill="#64748b" font-size="9">credit/collection/payments_prod</text>
+
+        <!-- стрелка вниз -->
+        <line x1="600" y1="144" x2="600" y2="176" stroke="#64748b" stroke-width="1.5" marker-end="url(#ah)"/>
+
+        <!-- ================= RISK_GOV ================= -->
+        <rect x="30" y="180" width="1140" height="252" rx="12" fill="rgba(52,211,153,0.05)" stroke="#34d399" stroke-width="1" stroke-dasharray="8,4"/>
+        <text x="46" y="200" fill="#34d399" font-size="10" font-weight="600">RISK_GOV · ОТВЕТ НА ТЗ · governance-слой, которого в приложениях нет — предмет самой роли</text>
+
+        <rect x="48" y="214" width="352" height="200" rx="8" fill="#0f172a" stroke="#34d399" stroke-width="1"/>
+        <text x="62" y="236" fill="#e2e8f0" font-size="12" font-weight="600">META · метаданные и владение</text>
+        <text x="62" y="258" fill="#94a3b8" font-size="9">METRIC_DEFINITIONS — канон COR_PCT_CC v1.0</text>
+        <text x="62" y="274" fill="#94a3b8" font-size="9">MODEL_REGISTRY — версии Gen5, дельты EL LT</text>
+        <text x="62" y="290" fill="#94a3b8" font-size="9">CHANGE_LOG — ломающее / кого уведомить</text>
+        <text x="62" y="306" fill="#94a3b8" font-size="9">CONSUMER_REGISTRY — 10 связей потребителей</text>
+        <text x="62" y="322" fill="#94a3b8" font-size="9">OWNERSHIP — владелец и стюард на объект</text>
+        <text x="62" y="338" fill="#94a3b8" font-size="9">V_OBJECT_CATALOG · V_LINEAGE · V_SCHEMA_DRIFT</text>
+        <text x="62" y="360" fill="#64748b" font-size="9">Part 1 — ландшафт и владение</text>
+        <text x="62" y="376" fill="#64748b" font-size="9">Part 3 — управление изменениями</text>
+        <text x="62" y="398" fill="#34d399" font-size="9">DBT_STAGE + PLATA_RISK_DBT — слой трансформаций</text>
+
+        <rect x="416" y="214" width="352" height="200" rx="8" fill="#0f172a" stroke="#34d399" stroke-width="1"/>
+        <text x="430" y="236" fill="#e2e8f0" font-size="12" font-weight="600">DQ · качество и дрейф</text>
+        <text x="430" y="258" fill="#94a3b8" font-size="9">BUILD_ASSERTIONS — 26 проверок, все проходят</text>
+        <text x="430" y="274" fill="#94a3b8" font-size="9">V_SCORECARD — 7 измерений DMBoK, светофор</text>
+        <text x="430" y="290" fill="#94a3b8" font-size="9">V_COR_RECONCILIATION — мост канон → 3 расчёта</text>
+        <text x="430" y="306" fill="#94a3b8" font-size="9">DRIFT_INVARIANTS — инварианты знака шагов моста</text>
+        <text x="430" y="322" fill="#94a3b8" font-size="9">V_COR_DRIFT — дрейф ОПРЕДЕЛЕНИЯ, не портфеля</text>
+        <text x="430" y="338" fill="#94a3b8" font-size="9">V_ALERT_CONDITIONS + ALERT_LOG — очередь</text>
+        <text x="430" y="360" fill="#64748b" font-size="9">Part 2 — метрики и качество данных</text>
+        <text x="430" y="376" fill="#64748b" font-size="9">Part 5 — что двигаем первым в 90 дней</text>
+        <text x="430" y="398" fill="#34d399" font-size="9">14.62% — канонический COR за апрель 2026</text>
+
+        <rect x="784" y="214" width="368" height="200" rx="8" fill="#0f172a" stroke="#34d399" stroke-width="1"/>
+        <text x="798" y="236" fill="#e2e8f0" font-size="12" font-weight="600">AGENT · контекст-слой для LLM</text>
+        <text x="798" y="258" fill="#94a3b8" font-size="9">TABLE_CARDS — 9 карточек: зерно, фильтр, знак, DO_NOT</text>
+        <text x="798" y="274" fill="#94a3b8" font-size="9">JOIN_GRAPH — 10 рёбер с точным ON и ловушкой</text>
+        <text x="798" y="290" fill="#94a3b8" font-size="9">PITFALLS — 10 граблей с исполняемым detection_sql</text>
+        <text x="798" y="306" fill="#94a3b8" font-size="9">GLOSSARY — 17 терминов с разрешением в объект</text>
+        <text x="798" y="322" fill="#94a3b8" font-size="9">METRIC_CONTRACTS — единственный способ считать</text>
+        <text x="798" y="338" fill="#94a3b8" font-size="9">EVAL_QUESTIONS — 16 золотых вопросов с эталонами</text>
+        <text x="798" y="360" fill="#64748b" font-size="9">Part 4 — готовность к работе LLM-агентов</text>
+        <text x="798" y="376" fill="#94a3b8" font-size="9">SV_COR — семантическая вью: фильтр stmt≥2 внутри</text>
+        <text x="798" y="398" fill="#34d399" font-size="9">13 664 символа ≈ 3.4k токенов — влезает в промпт</text>
+
+        <!-- стрелки в нативный слой -->
+        <line x1="968" y1="432" x2="968" y2="470" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#ahA)"/>
+        <line x1="592" y1="432" x2="592" y2="470" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#ahA)"/>
+        <line x1="224" y1="432" x2="224" y2="470" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#ahA)"/>
+
+        <!-- ================= НАТИВНЫЙ SNOWFLAKE ================= -->
+        <rect x="30" y="474" width="1140" height="160" rx="12" fill="rgba(251,191,36,0.05)" stroke="#fbbf24" stroke-width="1" stroke-dasharray="8,4"/>
+        <text x="46" y="494" fill="#fbbf24" font-size="10" font-weight="600">СВЕРХ ТЗ · НАТИВНЫЕ МЕХАНИЗМЫ SNOWFLAKE — до 12.08 все эти типы объектов существовали в аккаунте в количестве НОЛЬ</text>
+
+        <rect x="48" y="508" width="212" height="108" rx="8" fill="#0f172a" stroke="#fbbf24" stroke-width="1"/>
+        <text x="60" y="528" fill="#e2e8f0" font-size="11" font-weight="600">Cortex Search</text>
+        <text x="60" y="546" fill="#94a3b8" font-size="9">CS_RISK_DOCS</text>
+        <text x="60" y="562" fill="#94a3b8" font-size="9">9 приложений + контекст-слой</text>
+        <text x="60" y="578" fill="#94a3b8" font-size="9">86 чанков, одна поверхность</text>
+        <text x="60" y="600" fill="#fbbf24" font-size="9">проза и контракт в одном поиске</text>
+
+        <rect x="276" y="508" width="212" height="108" rx="8" fill="#0f172a" stroke="#fbbf24" stroke-width="1"/>
+        <text x="288" y="528" fill="#e2e8f0" font-size="11" font-weight="600">Cortex Agent</text>
+        <text x="288" y="546" fill="#94a3b8" font-size="9">RISK_COPILOT · 3 инструмента</text>
+        <text x="288" y="562" fill="#94a3b8" font-size="9">cor_metrics → SV_COR</text>
+        <text x="288" y="578" fill="#94a3b8" font-size="9">risk_docs → поиск · sql_exec</text>
+        <text x="288" y="600" fill="#fbbf24" font-size="9">формулу не сочиняет, берёт из контракта</text>
+
+        <rect x="504" y="508" width="212" height="108" rx="8" fill="#0f172a" stroke="#fbbf24" stroke-width="1"/>
+        <text x="516" y="528" fill="#e2e8f0" font-size="11" font-weight="600">dbt Project</text>
+        <text x="516" y="546" fill="#94a3b8" font-size="9">PLATA_RISK_DBT</text>
+        <text x="516" y="562" fill="#94a3b8" font-size="9">11 тестов, PASS=11 ERROR=0</text>
+        <text x="516" y="578" fill="#94a3b8" font-size="9">exposures = реестр потребителей</text>
+        <text x="516" y="600" fill="#fbbf24" font-size="9">канон нельзя обойти, не уронив прогон</text>
+
+        <rect x="732" y="508" width="212" height="108" rx="8" fill="#0f172a" stroke="#fbbf24" stroke-width="1"/>
+        <text x="744" y="528" fill="#e2e8f0" font-size="11" font-weight="600">Dynamic table</text>
+        <text x="744" y="546" fill="#94a3b8" font-size="9">DT_COR_MONTHLY</text>
+        <text x="744" y="562" fill="#94a3b8" font-size="9">TARGET_LAG = 1 day</text>
+        <text x="744" y="578" fill="#94a3b8" font-size="9">45 строк, апрель CC = 14.62</text>
+        <text x="744" y="600" fill="#fbbf24" font-size="9">свежесть держит платформа, не мы</text>
+
+        <rect x="960" y="508" width="192" height="108" rx="8" fill="#0f172a" stroke="#fbbf24" stroke-width="1"/>
+        <text x="972" y="528" fill="#e2e8f0" font-size="11" font-weight="600">Alert</text>
+        <text x="972" y="546" fill="#94a3b8" font-size="9">AL_RISK_GOV_WATCH</text>
+        <text x="972" y="562" fill="#94a3b8" font-size="9">суточно, состояние started</text>
+        <text x="972" y="578" fill="#94a3b8" font-size="9">4 источника условий</text>
+        <text x="972" y="600" fill="#fbbf24" font-size="9">детектор идёт, а не спроектирован</text>
+
+        <!-- стрелки на VPS -->
+        <line x1="382" y1="634" x2="382" y2="676" stroke="#a78bfa" stroke-width="1.5" marker-end="url(#ah)"/>
+        <line x1="1056" y1="634" x2="1056" y2="676" stroke="#a78bfa" stroke-width="1.5" marker-end="url(#ah)"/>
+        <text x="392" y="660" fill="#64748b" font-size="9">DATA_AGENT_RUN</text>
+        <text x="900" y="660" fill="#64748b" font-size="9">очередь ALERT_LOG →</text>
+
+        <!-- ================= VPS ================= -->
+        <rect x="30" y="680" width="1140" height="178" rx="12" fill="rgba(167,139,250,0.05)" stroke="#a78bfa" stroke-width="1" stroke-dasharray="8,4"/>
+        <text x="46" y="700" fill="#a78bfa" font-size="10" font-weight="600">СВЕРХ ТЗ · ТОНКИЙ СТЕК НА VPS (docker compose) — наружу вынесено только то, чего в Snowflake нет</text>
+
+        <rect x="48" y="714" width="252" height="126" rx="8" fill="#0f172a" stroke="#a78bfa" stroke-width="1"/>
+        <text x="60" y="734" fill="#e2e8f0" font-size="11" font-weight="600">plata-copilot-api</text>
+        <text x="60" y="752" fill="#94a3b8" font-size="9">FastAPI :8770, только loopback</text>
+        <text x="60" y="768" fill="#94a3b8" font-size="9">QUERY_TAG → аудит по человеку</text>
+        <text x="60" y="784" fill="#94a3b8" font-size="9">линт SQL против карточек таблиц</text>
+        <text x="60" y="800" fill="#94a3b8" font-size="9">/readyz говорит, ПОЧЕМУ не готов</text>
+        <text x="60" y="822" fill="#a78bfa" font-size="9">key-pair, ключ 400 и uid 10001</text>
+
+        <rect x="316" y="714" width="252" height="126" rx="8" fill="#0f172a" stroke="#a78bfa" stroke-width="1"/>
+        <text x="328" y="734" fill="#e2e8f0" font-size="11" font-weight="600">plata-copilot-bot</text>
+        <text x="328" y="752" fill="#94a3b8" font-size="9">aiogram, allowlist по chat_id</text>
+        <text x="328" y="768" fill="#94a3b8" font-size="9">/ask · /alerts · /help</text>
+        <text x="328" y="784" fill="#94a3b8" font-size="9">доставка алертов + кнопка «принял»</text>
+        <text x="328" y="800" fill="#94a3b8" font-size="9">ответ пришит к своему вопросу</text>
+        <text x="328" y="822" fill="#a78bfa" font-size="9">ни одной формулы и ни одного порога</text>
+
+        <rect x="584" y="714" width="252" height="126" rx="8" fill="#0f172a" stroke="#a78bfa" stroke-width="1"/>
+        <text x="596" y="734" fill="#e2e8f0" font-size="11" font-weight="600">eval_agent · export_log</text>
+        <text x="596" y="752" fill="#94a3b8" font-size="9">16 золотых вопросов, baseline</text>
+        <text x="596" y="768" fill="#94a3b8" font-size="9">--compare → exit 2 при деградации</text>
+        <text x="596" y="784" fill="#94a3b8" font-size="9">разбивка по difficulty обязательна</text>
+        <text x="596" y="800" fill="#94a3b8" font-size="9">стенограмма вопросов и ответов</text>
+        <text x="596" y="822" fill="#a78bfa" font-size="9">своя оценка — независимое свидетельство</text>
+
+        <rect x="852" y="714" width="300" height="126" rx="8" fill="#0f172a" stroke="#a78bfa" stroke-width="1"/>
+        <text x="864" y="734" fill="#e2e8f0" font-size="11" font-weight="600">Две личности в Snowflake</text>
+        <text x="864" y="752" fill="#34d399" font-size="9">LLM_AGENT_RO — отвечает, писать не может</text>
+        <text x="864" y="768" fill="#34d399" font-size="9">COPILOT_WRITER — журнал, данных не видит</text>
+        <text x="864" y="784" fill="#94a3b8" font-size="9">WH_COPILOT + RM_COPILOT: цена отдельно</text>
+        <text x="864" y="800" fill="#94a3b8" font-size="9">PII недостижим правами, а не инструкцией</text>
+        <text x="864" y="822" fill="#a78bfa" font-size="9">граница — права роли, а не промпт</text>
+
+        <!-- стрелки к потребителям -->
+        <line x1="442" y1="858" x2="442" y2="898" stroke="#f472b6" stroke-width="1.5" marker-end="url(#ah)"/>
+        <line x1="174" y1="858" x2="174" y2="898" stroke="#f472b6" stroke-width="1.5" stroke-dasharray="5,4" marker-end="url(#ah)"/>
+        <line x1="600" y1="144" x2="1186" y2="144" stroke="none"/>
+
+        <!-- ================= ПОТРЕБИТЕЛИ ================= -->
+        <rect x="30" y="902" width="1140" height="140" rx="12" fill="rgba(244,114,182,0.05)" stroke="#f472b6" stroke-width="1" stroke-dasharray="8,4"/>
+        <text x="46" y="922" fill="#f472b6" font-size="10" font-weight="600">ПОТРЕБИТЕЛИ · один и тот же канон для человека и для машины</text>
+
+        <rect x="48" y="936" width="252" height="88" rx="8" fill="#0f172a" stroke="#475569" stroke-width="1" stroke-dasharray="4,3"/>
+        <text x="60" y="956" fill="#94a3b8" font-size="11" font-weight="600">MCP для Claude Desktop</text>
+        <text x="60" y="974" fill="#64748b" font-size="9">та же поверхность, что у бота</text>
+        <text x="60" y="990" fill="#64748b" font-size="9">штатный MCP-сервер аккаунта уже есть</text>
+        <text x="60" y="1010" fill="#64748b" font-size="9">запланировано, не построено</text>
+
+        <rect x="316" y="936" width="252" height="88" rx="8" fill="#0f172a" stroke="#f472b6" stroke-width="1"/>
+        <text x="328" y="956" fill="#e2e8f0" font-size="11" font-weight="600">Telegram</text>
+        <text x="328" y="974" fill="#94a3b8" font-size="9">28 прогонов, 23 разных вопроса</text>
+        <text x="328" y="990" fill="#94a3b8" font-size="9">весь план проверки A–I пройден</text>
+        <text x="328" y="1010" fill="#f472b6" font-size="9">работает</text>
+
+        <rect x="584" y="936" width="252" height="88" rx="8" fill="#0f172a" stroke="#475569" stroke-width="1"/>
+        <text x="596" y="956" fill="#94a3b8" font-size="11" font-weight="600">Tableau</text>
+        <text x="596" y="974" fill="#64748b" font-size="9">дашборды COR и CLIP</text>
+        <text x="596" y="990" fill="#64748b" font-size="9">в реестре потребителей</text>
+        <text x="596" y="1010" fill="#64748b" font-size="9">уведомление за 10 рабочих дней</text>
+
+        <rect x="852" y="936" width="300" height="88" rx="8" fill="#0f172a" stroke="#475569" stroke-width="1"/>
+        <text x="864" y="956" fill="#94a3b8" font-size="11" font-weight="600">Управленческая отчётность · аналитики</text>
+        <text x="864" y="974" fill="#64748b" font-size="9">ежемесячный цикл, окно уведомления 20 дней</text>
+        <text x="864" y="990" fill="#64748b" font-size="9">~10 риск-аналитиков</text>
+        <text x="864" y="1010" fill="#64748b" font-size="9">канон один и тот же для всех</text>
+      </svg>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <div class="card-header"><div class="card-dot emerald"></div><h3>Что закрывает ТЗ</h3></div>
+        <ul>
+          <li><b>Part 1</b> — ландшафт воспроизведён, владение и потребители как таблицы</li>
+          <li><b>Part 2</b> — канон COR_PCT_CC и мост к трём ведомственным расчётам</li>
+          <li><b>Part 3</b> — реестр моделей, журнал изменений, оценка влияния запросом</li>
+          <li><b>Part 4</b> — контекст-слой: карточки, джойны, грабли, глоссарий, контракты</li>
+          <li><b>Part 5</b> — скоркарта по 7 измерениям как основание приоритизации</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-dot amber"></div><h3>Сверх ТЗ — в Snowflake</h3></div>
+        <ul>
+          <li>Cortex Search: документация перестала быть «не влезает в промпт»</li>
+          <li>Cortex Agent: Part 4 из описания превратился в поведение</li>
+          <li>dbt: единственное явное требование вакансии, закрытое кодом</li>
+          <li>Alert: детектор из Part 2.5 идёт, а не спроектирован</li>
+          <li>Dynamic table: своевременность как обязательство платформы</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-dot violet"></div><h3>Сверх ТЗ — вне Snowflake</h3></div>
+        <ul>
+          <li>Telegram-бот: рецензент задаёт свой вопрос и получает число с SQL</li>
+          <li>Регресс с baseline и <b>exit 2</b> при деградации</li>
+          <li>Стенограмма диалогов как приложение к ответу</li>
+          <li>Приёмка обоих контуров: 14/14 в Snowflake, PASS=17 на VPS</li>
+          <li>Разделение личностей: отвечающая и журнальная роли</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-dot pink"></div><h3>Три находки, которых не было бы без запуска</h3></div>
+        <ul>
+          <li>Агент выдал <b>14.94%</b> вместо 14.62 — молча смешал CC и GRZD_CLIPPED</li>
+          <li>Первый детектор дрейфа сработал <b>33 раза из 33</b> — следил за портфелем, а не за определением</li>
+          <li>dbt-тест нашёл расхождение канона и семантической вью на двух краевых месяцах</li>
+          <li>Календарь: агент ответил 22 рабочих дня вместо 20 — не было доступа к HOLIDAYS</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-dot cyan"></div><h3>Замеры</h3></div>
+        <ul>
+          <li>59 таблиц · 15 вью · 1 семантическая вью · 8.1 млн строк</li>
+          <li>26 утверждений корректности, провалов 0</li>
+          <li>Контекст-слой: 50 записей ≈ 3.4k токенов</li>
+          <li>Поиск: 86 чанков, ACTIVE/ACTIVE</li>
+          <li>Агент: 69 сессий, 5.35 млн токенов за 7 дней</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-dot slate"></div><h3>Что сознательно не сделано</h3></div>
+        <ul>
+          <li>Агенту не выдано право записи ни под каким видом</li>
+          <li>Двусторонний синк git ↔ Snowflake: направление одно</li>
+          <li>Свой веб-UI: Telegram и MCP покрывают обе аудитории</li>
+          <li>Покупной каталог: каталог — таблицы рядом с данными</li>
+          <li>Reference Data Management — вне приоритета первых 90 дней</li>
+        </ul>
+      </div>
+    </div>
+
+    <p class="footer">
+      Всё, что отмечено цифрами, — замеры из живого аккаунта DX31435, а не оценки.<br>
+      Приёмка воспроизводится двумя командами: <code>sql/15_acceptance.sql</code> и <code>agent-service/check_all.sh</code>.
+    </p>
+  </div>
+</body>
+</html>
