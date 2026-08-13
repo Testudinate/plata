@@ -1,0 +1,10 @@
+plata_risk:
+  target: sandbox
+  outputs:
+    sandbox:
+      type: snowflake
+      database: RISK_GOV
+      schema: DQ
+      warehouse: COMPUTE_WH
+      role: HERMES_MCP_ROLE
+      threads: 4
