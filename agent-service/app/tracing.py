@@ -42,6 +42,15 @@ except Exception:  # пакет не установлен — трейсинг �
 _client: Any = None
 _checked = False
 _warned = False
+_tagging_noted = False
+
+
+def _note_tagging(mechanism: str) -> None:
+    """Один раз сказать в лог, чем размечается трейс. Дальше молчим."""
+    global _tagging_noted
+    if not _tagging_noted:
+        _tagging_noted = True
+        log.info("разметка трейса: %s", mechanism)
 
 
 def _usd_per_1m() -> float | None:
@@ -127,19 +136,40 @@ def question(surface: str, user: str | None, text: str) -> Iterator[Any]:
         return
 
     tags = [surface] + (["eval"] if surface == "eval" else [])
+    trace_attrs = {
+        "user_id": user or "anonymous",
+        "session_id": f"{surface}:{user or 'anonymous'}",
+        "tags": tags,
+    }
     attrs = getattr(lf, "propagate_attributes", None)
 
     try:
         with ExitStack() as stack:
             if attrs is not None:
-                stack.enter_context(attrs(
-                    user_id=user or "anonymous",
-                    session_id=f"{surface}:{user or 'anonymous'}",
-                    tags=tags,
-                ))
+                try:
+                    stack.enter_context(attrs(**trace_attrs))
+                except Exception:
+                    log.debug("propagate_attributes не принял атрибуты", exc_info=True)
+
             span = stack.enter_context(lf.start_as_current_observation(
                 name=f"copilot.ask:{surface}", as_type="span", input={"question": text},
             ))
+
+            # Второй путь. propagate_attributes задаёт контекст, но теги на
+            # трейсе от него не появились — в v4 трейс это корневой
+            # observation, и разметку принимает он сам через update_trace.
+            # Делаем оба и логируем, какой сработал: молчаливое «тегов нет»
+            # уже стоило круга диагностики.
+            update_trace = getattr(span, "update_trace", None)
+            if update_trace is not None:
+                try:
+                    update_trace(name=f"copilot:{surface}", **trace_attrs)
+                    _note_tagging("span.update_trace")
+                except Exception:
+                    log.debug("span.update_trace не принял атрибуты", exc_info=True)
+            elif attrs is None:
+                _note_tagging("нет ни одного механизма разметки трейса")
+
             yield span
     except Exception:
         # Первый отказ — WARNING с трейсбеком, дальше DEBUG. Молчаливая
