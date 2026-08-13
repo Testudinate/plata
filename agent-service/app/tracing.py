@@ -195,7 +195,12 @@ def record_agent_run(span: Any, response_json: dict[str, Any], parsed: dict[str,
         total_tokens = usage["input"] + usage["output"]
         cost = {"total": total_tokens / 1_000_000 * rate} if rate and total_tokens else None
 
-        with lf.start_as_current_observation(
+        # Дочерний observation создаётся ОТ РОДИТЕЛЯ, если объект span это
+        # умеет. Неявный контекст здесь подвёл: generation уезжал отдельным
+        # трейсом, без имени трейса и без тегов, и в списке выглядел как
+        # самостоятельный вызов, а не как шаг вопроса.
+        starter = getattr(span, "start_as_current_observation", None) or lf.start_as_current_observation
+        with starter(
             name="cortex.data_agent_run",
             as_type="generation",
             model=model_name(response_json),
@@ -267,6 +272,8 @@ def selftest() -> int:
         print("5. пробный трейс:       пропущен, клиент не создан")
         return 1
 
+    print(f"5. методы клиента:      {', '.join(sorted(m for m in dir(lf) if not m.startswith('_')))}")
+
     try:
         attrs = getattr(lf, "propagate_attributes", None)
         with ExitStack() as stack:
@@ -276,8 +283,9 @@ def selftest() -> int:
                 name="plata-copilot:selftest", as_type="span", input={"probe": "plata-copilot"},
             ))
             span.update(output={"ok": True})
+            print(f"6. методы span:         {', '.join(sorted(m for m in dir(span) if not m.startswith('_')))}")
         lf.flush()
-        print("5. пробный трейс:       отправлен и дожат (flush)")
+        print("7. пробный трейс:       отправлен и дожат (flush)")
         print("   ищите трейс с именем plata-copilot:selftest и тегом selftest")
         print("   если его нет в интерфейсе — версия сервера не совпадает с SDK 4.x:")
         print("   docker inspect langfuse-server --format '{{.Config.Image}}'")
