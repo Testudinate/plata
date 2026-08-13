@@ -135,7 +135,10 @@ def question(surface: str, user: str | None, text: str) -> Iterator[Any]:
         yield None
         return
 
-    tags = [surface] + (["eval"] if surface == "eval" else [])
+    # Постоянный тег проекта плюс поверхность. dict.fromkeys вместо set —
+    # порядок тегов сохраняется, а дубли уходят: при surface="eval" прошлая
+    # версия давала ["eval", "eval"], и в интерфейсе это было видно.
+    tags = list(dict.fromkeys(["plata", surface] + (["eval"] if surface == "eval" else [])))
     trace_attrs = {
         "user_id": user or "anonymous",
         "session_id": f"{surface}:{user or 'anonymous'}",
@@ -290,7 +293,7 @@ def selftest() -> int:
         attrs = getattr(lf, "propagate_attributes", None)
         with ExitStack() as stack:
             if attrs is not None:
-                stack.enter_context(attrs(user_id="selftest", session_id="selftest", tags=["selftest"]))
+                stack.enter_context(attrs(user_id="selftest", session_id="selftest", tags=["plata", "selftest"]))
             span = stack.enter_context(lf.start_as_current_observation(
                 name="plata-copilot:selftest", as_type="span", input={"probe": "plata-copilot"},
             ))
