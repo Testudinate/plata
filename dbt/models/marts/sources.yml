@@ -1,0 +1,20 @@
+version: 2
+
+sources:
+  - name: risk_dm
+    database: RISK_DM
+    schema: DM
+    description: "Витрина риск-аналитики. Источник для слоя трансформаций."
+    tables:
+      - name: stm_cor_cc
+        description: "COR на зерне выписки. Даты только рабочие дни."
+        columns:
+          - name: account_id
+            tests: [not_null]
+          - name: product_risks
+            tests:
+              - not_null
+              - accepted_values:
+                  values: ['CC', 'GRZD_CLIPPED']
+          - name: statement_num
+            tests: [not_null]

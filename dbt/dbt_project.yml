@@ -1,0 +1,15 @@
+name: 'plata_risk'
+version: '1.0.0'
+config-version: 2
+profile: 'plata_risk'
+
+model-paths: ["models"]
+test-paths: ["tests"]
+target-path: "target"
+
+# Без +schema: dbt приклеивает кастомную схему к целевой и получается DQ_DQ.
+# Схема задаётся один раз в profiles.yml, здесь только материализация.
+models:
+  plata_risk:
+    marts:
+      +materialized: view
