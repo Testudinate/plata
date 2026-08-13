@@ -141,40 +141,31 @@ def question(surface: str, user: str | None, text: str) -> Iterator[Any]:
         "session_id": f"{surface}:{user or 'anonymous'}",
         "tags": tags,
     }
-    attrs = getattr(lf, "propagate_attributes", None)
+
+    # ФАКТИЧЕСКИЙ API 4.14, снятый с живого клиента, а не из памяти:
+    #   client: start_as_current_observation, start_observation,
+    #           update_current_span, update_current_generation
+    #   span:   update, end, start_observation, score_trace, set_trace_io
+    # Ни propagate_attributes, ни update_current_trace, ни span.update_trace
+    # в этой ветке НЕТ — обе мои прошлые попытки были мимо. Остаётся один
+    # путь: атрибуты трейса передаются в корневой observation при создании.
+    # Если ветка SDK их не примет, пересоздаём без них: трейс без разметки
+    # лучше, чем отсутствие трейса.
+    def _open(**extra):
+        return lf.start_as_current_observation(
+            name=f"copilot.ask:{surface}", as_type="span", input={"question": text}, **extra
+        )
 
     try:
         with ExitStack() as stack:
-            if attrs is not None:
-                try:
-                    stack.enter_context(attrs(**trace_attrs))
-                except Exception:
-                    log.debug("propagate_attributes не принял атрибуты", exc_info=True)
-
-            span = stack.enter_context(lf.start_as_current_observation(
-                name=f"copilot.ask:{surface}", as_type="span", input={"question": text},
-            ))
-
-            # Второй путь. propagate_attributes задаёт контекст, но теги на
-            # трейсе от него не появились — в v4 трейс это корневой
-            # observation, и разметку принимает он сам через update_trace.
-            # Делаем оба и логируем, какой сработал: молчаливое «тегов нет»
-            # уже стоило круга диагностики.
-            update_trace = getattr(span, "update_trace", None)
-            if update_trace is not None:
-                try:
-                    update_trace(name=f"copilot:{surface}", **trace_attrs)
-                    _note_tagging("span.update_trace")
-                except Exception:
-                    log.debug("span.update_trace не принял атрибуты", exc_info=True)
-            elif attrs is None:
-                _note_tagging("нет ни одного механизма разметки трейса")
-
+            try:
+                span = stack.enter_context(_open(**trace_attrs))
+                _note_tagging("kwargs корневого observation")
+            except TypeError:
+                span = stack.enter_context(_open())
+                _note_tagging("разметка не поддерживается этой веткой SDK")
             yield span
     except Exception:
-        # Первый отказ — WARNING с трейсбеком, дальше DEBUG. Молчаливая
-        # деградация здесь опаснее самой ошибки: трейсов нет, в логе чисто,
-        # и причина ищется в сети и ключах, а не в коде.
         global _warned
         if not _warned:
             _warned = True
