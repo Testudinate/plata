@@ -41,6 +41,7 @@ except Exception:  # пакет не установлен — трейсинг �
 
 _client: Any = None
 _checked = False
+_warned = False
 
 
 def _usd_per_1m() -> float | None:
@@ -141,7 +142,15 @@ def question(surface: str, user: str | None, text: str) -> Iterator[Any]:
             ))
             yield span
     except Exception:
-        log.debug("трейс не открылся, продолжаем без него", exc_info=True)
+        # Первый отказ — WARNING с трейсбеком, дальше DEBUG. Молчаливая
+        # деградация здесь опаснее самой ошибки: трейсов нет, в логе чисто,
+        # и причина ищется в сети и ключах, а не в коде.
+        global _warned
+        if not _warned:
+            _warned = True
+            log.warning("трейс не открылся, работаем без него — проверьте python -m app.tracing", exc_info=True)
+        else:
+            log.debug("трейс не открылся", exc_info=True)
         yield None
 
 
@@ -179,7 +188,12 @@ def record_agent_run(span: Any, response_json: dict[str, Any], parsed: dict[str,
                 metadata={"latency_s": latency_s, "cost_source": "env rate" if cost else "не задана"},
             )
     except Exception:
-        log.debug("не удалось записать generation", exc_info=True)
+        global _warned
+        if not _warned:
+            _warned = True
+            log.warning("generation не записался, трейс будет неполным", exc_info=True)
+        else:
+            log.debug("не удалось записать generation", exc_info=True)
 
 
 def flush() -> None:
