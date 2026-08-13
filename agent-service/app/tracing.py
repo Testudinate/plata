@@ -105,34 +105,36 @@ def model_name(response_json: dict[str, Any]) -> str:
 
 @contextmanager
 def question(surface: str, user: str | None, text: str) -> Iterator[Any]:
-    """Корневой observation на один вопрос. Без Langfuse — пустой контекст."""
+    """Корневой observation на один вопрос. Без Langfuse — пустой контекст.
+
+    ВАЖНО про API 4.x: контекст задаётся только `start_as_current_span`.
+    Первая редакция звала `start_span` и следом `update_current_trace` — span
+    при этом создаётся, но текущим НЕ становится, поэтому user_id, session_id
+    и теги тихо не приезжали. Ошибка бесшумная: трейс в интерфейсе есть,
+    разметки на нём нет.
+    """
     lf = client()
     if lf is None:
         yield None
         return
 
-    span = None
     try:
-        span = lf.start_span(name="copilot.ask", input={"question": text})
-        # Теги ставятся на трейс: без них eval-прогоны неотличимы от живых
-        # вопросов, и через неделю в Langfuse будет 90% синтетики.
-        lf.update_current_trace(
-            user_id=user or "anonymous",
-            session_id=f"{surface}:{user or 'anonymous'}",
-            tags=[surface] + (["eval"] if surface == "eval" else []),
-        )
-    except Exception:
-        log.debug("не удалось открыть трейс", exc_info=True)
-        span = None
-
-    try:
-        yield span
-    finally:
-        if span is not None:
+        with lf.start_as_current_span(name="copilot.ask", input={"question": text}) as span:
             try:
-                span.end()
+                # Без тегов eval-прогоны неотличимы от живых вопросов, и через
+                # неделю в Langfuse будет 90% синтетики.
+                lf.update_current_trace(
+                    name=f"copilot:{surface}",
+                    user_id=user or "anonymous",
+                    session_id=f"{surface}:{user or 'anonymous'}",
+                    tags=[surface] + (["eval"] if surface == "eval" else []),
+                )
             except Exception:
-                log.debug("не удалось закрыть трейс", exc_info=True)
+                log.debug("не удалось разметить трейс", exc_info=True)
+            yield span
+    except Exception:
+        log.debug("трейс не открылся, продолжаем без него", exc_info=True)
+        yield None
 
 
 def record_agent_run(span: Any, response_json: dict[str, Any], parsed: dict[str, Any], latency_s: float) -> None:
@@ -146,28 +148,27 @@ def record_agent_run(span: Any, response_json: dict[str, Any], parsed: dict[str,
         total_tokens = usage["input"] + usage["output"]
         cost = {"total": total_tokens / 1_000_000 * rate} if rate and total_tokens else None
 
-        generation = lf.start_generation(
+        with lf.start_as_current_generation(
             name="cortex.data_agent_run",
             model=model_name(response_json),
             input={"tools_available": ["cor_metrics", "risk_docs", "sql_exec"]},
-        )
-        generation.update(
-            output={
-                "answer": (parsed.get("text") or "")[:4000],
-                "tools_used": parsed.get("tools"),
-                "sql": parsed.get("sql"),
-                "lint_findings": parsed.get("lint"),
-            },
-            usage_details={
-                "input": usage["input"],
-                "output": usage["output"],
-                "cache_read_input_tokens": usage["cache_read"],
-                "cache_creation_input_tokens": usage["cache_write"],
-            },
-            **({"cost_details": cost} if cost else {}),
-            metadata={"latency_s": latency_s, "cost_source": "env rate" if cost else "не задана"},
-        )
-        generation.end()
+        ) as generation:
+            generation.update(
+                output={
+                    "answer": (parsed.get("text") or "")[:4000],
+                    "tools_used": parsed.get("tools"),
+                    "sql": parsed.get("sql"),
+                    "lint_findings": parsed.get("lint"),
+                },
+                usage_details={
+                    "input": usage["input"],
+                    "output": usage["output"],
+                    "cache_read_input_tokens": usage["cache_read"],
+                    "cache_creation_input_tokens": usage["cache_write"],
+                },
+                **({"cost_details": cost} if cost else {}),
+                metadata={"latency_s": latency_s, "cost_source": "env rate" if cost else "не задана"},
+            )
     except Exception:
         log.debug("не удалось записать generation", exc_info=True)
 
@@ -181,3 +182,54 @@ def flush() -> None:
         lf.flush()
     except Exception:
         log.debug("flush не удался", exc_info=True)
+
+
+def selftest() -> int:
+    """Диагностика в одну команду: python -m app.tracing
+
+    Отвечает по порядку на все вопросы, которые задаёшь, когда трейсов нет:
+    установлен ли пакет, заданы ли ключи, доступен ли хост, доезжает ли
+    пробный трейс. Каждая строка — отдельная гипотеза, а не «что-то не так».
+    """
+    import urllib.request
+
+    from .config import settings
+
+    cfg = settings()
+    print(f"1. пакет langfuse:      {'установлен' if _HAS_SDK else 'НЕТ — pip не поставил, пересоберите образ'}")
+    print(f"2. LANGFUSE_HOST:       {cfg.langfuse_host or 'ПУСТО'}")
+    print(f"3. ключи заданы:        {'да' if cfg.tracing_enabled else 'НЕТ — public/secret пустые'}")
+
+    if cfg.langfuse_host:
+        try:
+            code = urllib.request.urlopen(cfg.langfuse_host.rstrip("/") + "/api/public/health", timeout=5).status
+            print(f"4. хост отвечает:       HTTP {code}")
+        except Exception as exc:
+            print(f"4. хост отвечает:       НЕТ — {exc}")
+            print("   внутри контейнера 127.0.0.1 — это его собственная петля;")
+            print("   идти надо по имени контейнера в сети llm-shared")
+
+    lf = client()
+    if lf is None:
+        print("5. пробный трейс:       пропущен, клиент не создан")
+        return 1
+
+    try:
+        with lf.start_as_current_span(name="selftest", input={"probe": "plata-copilot"}) as span:
+            lf.update_current_trace(name="plata-copilot:selftest", tags=["selftest"])
+            span.update(output={"ok": True})
+        lf.flush()
+        print("5. пробный трейс:       отправлен и дожат (flush)")
+        print("   ищите трейс с именем plata-copilot:selftest и тегом selftest")
+        print("   если его нет в интерфейсе — версия сервера не совпадает с SDK 4.x:")
+        print("   docker inspect langfuse-server --format '{{.Config.Image}}'")
+        return 0
+    except Exception as exc:
+        print(f"5. пробный трейс:       ОШИБКА — {exc}")
+        return 2
+
+
+if __name__ == "__main__":
+    import sys
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s %(message)s")
+    sys.exit(selftest())
