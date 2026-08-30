@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plata × dsh — перенос паттернов</title>
+</head>
+<body>
+<style>
+  /* ============ Токены — те же, что в docs/agent-analysis-slides.html: печатный носитель, светлая бумага. ============ */
+  :root {
+    --paper:      #e9edf2;
+    --slide:      #fcfdfe;
+    --panel:      #f1f5f9;
+    --panel-deep: #e8eef4;
+    --ink:        #121e2a;
+    --ink-2:      #4c5c6c;
+    --ink-3:      #8494a4;
+    --hairline:   #dbe3eb;
+    --accent:     #1c5cab;
+    --accent-soft:#e3ecf7;
+    --pass-text:  #006300;
+    --pass-dot:   #0ca30c;
+    --pass-bg:    #e7f3e7;
+    --warn-text:  #8a5a00;
+    --warn-dot:   #fab219;
+    --warn-bg:    #faf0da;
+    --fail-text:  #a32f2f;
+    --fail-dot:   #d03b3b;
+    --fail-bg:    #f9e7e7;
+    --mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, "Liberation Mono", monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", "Liberation Sans", sans-serif;
+  }
+  html, body { background: var(--paper); }
+  body { font-family: var(--sans); color: var(--ink); margin: 0; -webkit-font-smoothing: antialiased; }
+
+  .deck { display: flex; flex-direction: column; gap: 28px; padding: 28px 16px; max-width: 1320px; margin: 0 auto; }
+  .slidebox { width: 100%; overflow: hidden; }
+  .slide {
+    width: 1280px; height: 720px; background: var(--slide); box-sizing: border-box;
+    padding: 48px 56px 40px; display: flex; flex-direction: column;
+    transform: scale(var(--s, 1)); transform-origin: top left;
+    border: 1px solid var(--hairline); box-shadow: 0 2px 14px rgba(18, 30, 42, 0.07);
+  }
+
+  .top {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--ink-3); border-bottom: 1px solid var(--hairline); padding-bottom: 12px; margin-bottom: 24px;
+  }
+  .top .no { color: var(--accent); }
+  h1 { font-size: 33px; line-height: 1.18; font-weight: 750; letter-spacing: -0.015em; margin: 0 0 6px; text-wrap: balance; }
+  .lede { font-size: 16.5px; line-height: 1.45; color: var(--ink-2); margin: 0 0 22px; max-width: 940px; }
+  .lede b, .note b, li b, p b, td b { color: var(--ink); font-weight: 650; }
+  .foot {
+    margin-top: auto; padding-top: 14px; border-top: 1px solid var(--hairline);
+    font-family: var(--mono); font-size: 11px; color: var(--ink-3); letter-spacing: 0.02em;
+    display: flex; justify-content: space-between; gap: 16px;
+  }
+
+  .cols { display: grid; gap: 28px; flex: 1; min-height: 0; }
+  .c2 { grid-template-columns: 1fr 1fr; }
+  .c2w { grid-template-columns: 7fr 5fr; }
+  .c2n { grid-template-columns: 5fr 7fr; }
+  .panel { background: var(--panel); border: 1px solid var(--hairline); padding: 18px 20px; }
+  .eyebrow {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--accent); margin: 0 0 10px; font-weight: 600;
+  }
+  ul.tight { margin: 0; padding-left: 18px; font-size: 15px; line-height: 1.5; }
+  ul.tight li { margin-bottom: 10px; }
+  ul.tight li:last-child { margin-bottom: 0; }
+  .m { font-family: var(--mono); font-size: 0.9em; background: var(--panel-deep); padding: 1px 5px; border-radius: 3px; white-space: nowrap; }
+
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 22px; }
+  .stat { background: var(--panel); border: 1px solid var(--hairline); padding: 14px 16px 12px; }
+  .stat .v { font-size: 28px; font-weight: 750; letter-spacing: -0.01em; line-height: 1.1; }
+  .stat .k { font-family: var(--mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.09em; color: var(--ink-3); margin-top: 6px; }
+
+  .chip { display: inline-flex; align-items: center; gap: 7px; font-family: var(--mono); font-size: 11.5px; font-weight: 600; padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
+  .chip::before { content: ""; width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .chip.pass { background: var(--pass-bg); color: var(--pass-text); } .chip.pass::before { background: var(--pass-dot); }
+  .chip.warn { background: var(--warn-bg); color: var(--warn-text); } .chip.warn::before { background: var(--warn-dot); }
+  .chip.fail { background: var(--fail-bg); color: var(--fail-text); } .chip.fail::before { background: var(--fail-dot); }
+  .chip.gap  { background: var(--accent-soft); color: var(--accent); } .chip.gap::before { background: var(--accent); }
+
+  .callout { border-left: 3px solid var(--accent); padding: 4px 0 4px 14px; font-size: 14px; line-height: 1.5; color: var(--ink-2); }
+  .callout + .callout { margin-top: 14px; }
+  .callout .h { font-weight: 650; color: var(--ink); display: block; margin-bottom: 3px; }
+
+  /* ---------- Таблица-карта (слои / рецепты) ---------- */
+  table.map { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  table.map th {
+    text-align: left; font-family: var(--mono); font-size: 10px; letter-spacing: 0.09em; text-transform: uppercase;
+    color: var(--ink-3); padding: 0 10px 8px 0; border-bottom: 1px solid var(--hairline); font-weight: 600;
+  }
+  table.map td { padding: 10px 10px 10px 0; border-bottom: 1px dashed var(--hairline); vertical-align: top; line-height: 1.42; }
+  table.map tr:last-child td { border-bottom: none; }
+  table.map td.layer { font-weight: 650; white-space: nowrap; width: 190px; }
+  table.map td.stat { width: 168px; }
+  table.map td.why { color: var(--ink-2); }
+
+  /* ---------- Пронумерованные шаги процесса ---------- */
+  .steps { display: flex; flex-direction: column; gap: 16px; }
+  .step { display: flex; gap: 14px; align-items: flex-start; }
+  .step .no {
+    flex: none; width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 12px; font-weight: 700;
+  }
+  .step .body { padding-top: 2px; font-size: 14.5px; line-height: 1.48; color: var(--ink-2); }
+  .step .body b { color: var(--ink); }
+  .step:not(:last-child) .no { position: relative; }
+  .step:not(:last-child) .no::after {
+    content: ""; position: absolute; top: 26px; left: 50%; width: 1px; height: 16px;
+    background: var(--hairline); transform: translateX(-50%);
+  }
+
+  /* ---------- Горизонтальная схема ---------- */
+  .flow { font-family: var(--mono); font-size: 13px; line-height: 1.5; }
+  .flow .n { background: var(--slide); border: 1px solid var(--hairline); padding: 8px 12px; border-radius: 6px; display: inline-block; }
+  .flow .n.hl { border-color: var(--accent); color: var(--accent); }
+  .flow .n.x { border-color: var(--fail-dot); color: var(--fail-text); text-decoration: line-through; }
+  .flow .arrow { color: var(--ink-3); padding: 0 6px; }
+  .flow .line { margin-bottom: 10px; }
+  .flow .sub { color: var(--ink-2); font-family: var(--sans); font-size: 13px; padding-left: 8px; }
+
+  /* ---------- Временная шкала (детективный контроль) ---------- */
+  .timeline { display: flex; align-items: stretch; gap: 0; margin: 6px 0 4px; }
+  .tl-step { flex: 1; text-align: center; position: relative; padding: 0 6px; }
+  .tl-step .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--accent); margin: 0 auto 10px; position: relative; z-index: 1; }
+  .tl-step.after .dot { background: var(--warn-dot); }
+  .tl-step .rail { position: absolute; top: 5px; left: -50%; width: 100%; height: 2px; background: var(--hairline); z-index: 0; }
+  .tl-step:first-child .rail { display: none; }
+  .tl-step .lbl { font-family: var(--mono); font-size: 12px; font-weight: 650; color: var(--ink); }
+  .tl-step .sub { font-size: 12px; color: var(--ink-3); margin-top: 2px; }
+
+  .twocol-lists { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; flex: 1; min-height: 0; }
+  .listcard { background: var(--panel); border: 1px solid var(--hairline); padding: 18px 20px; }
+  .listcard .hd { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .listcard .hd .chip { }
+  .listcard .hd .t { font-weight: 700; font-size: 15px; }
+  .listcard ul { margin: 0; padding-left: 18px; font-size: 13.8px; line-height: 1.5; }
+  .listcard li { margin-bottom: 9px; }
+  .listcard li:last-child { margin-bottom: 0; }
+  .listcard li b { color: var(--ink); }
+
+  @media print {
+    html, body { background: #fff; }
+    .deck { padding: 0; gap: 0; max-width: none; }
+    .slidebox { height: 720px !important; page-break-after: always; break-after: page; }
+    .slide { transform: none; border: none; box-shadow: none; }
+    @page { size: 1280px 720px; margin: 0; }
+  }
+</style>
+
+<div class="deck">
+
+<!-- ================= Слайд 1. TL;DR ================= -->
+<div class="slidebox"><section class="slide">
+  <div class="top"><span>Plata Risk Copilot · Перенос паттернов DeepSeek Harness</span><span class="no">01 / 07</span></div>
+  <h1>dsh не ставится на VPS — переносятся паттерны, не рантайм</h1>
+  <p class="lede">Источник — «DeepSeek Harness. Иллюстрированное руководство» (developer preview 0.1, редакция 3, 19.08.2026), написанное под <b>другие</b> проекты — hermes-memory, telegram-bot, brazilmama. Здесь та же архитектура сверяется с <span class="m">RISK_COPILOT</span> слой за слоем: что совпало само, что не годится и почему, что стоит добавить.</p>
+
+  <div class="stats">
+    <div class="stat"><div class="v">14</div><div class="k">слоёв харнесса сверено</div></div>
+    <div class="stat"><div class="v">5</div><div class="k">рецептов dsh оценено</div></div>
+    <div class="stat"><div class="v">6</div><div class="k">паттернов — явный отказ</div></div>
+    <div class="stat"><div class="v">1</div><div class="k">новая идея поверх решённого</div></div>
+  </div>
+
+  <div class="cols c2">
+    <div class="panel">
+      <p class="eyebrow">Почему не буквально</p>
+      <div class="flow">
+        <div class="line"><span class="n x">dsh: bash + fs + sandbox + skills</span></div>
+        <div class="line"><span class="arrow" style="padding-left:0">↳</span><span class="sub">харнесс, который агент собирает себе сам на VPS</span></div>
+        <div class="line" style="margin-top:14px"><span class="n hl">RISK_COPILOT</span><span class="sub" style="padding-left:10px">внутри Snowflake, без bash-инструмента, <span class="m">sql_exec</span> = SELECT под <span class="m">LLM_AGENT_RO</span></span></div>
+      </div>
+      <p style="font-size:13.5px; color:var(--ink-2); line-height:1.5; margin:14px 0 0">Ставить харнесс снаружи значило бы построить ровно тот тулинг, отсутствие которого — часть доказательства governance.</p>
+    </div>
+    <div>
+      <ul class="tight">
+        <li><b>Что реально переносится</b> — тонкий слой <span class="m">agent-service</span> (<span class="m">bot.py</span> / <span class="m">api.py</span> / <span class="m">copilot.py</span> / <span class="m">tracing.py</span>): он структурно похож на «харнесс без цикла агента».</li>
+        <li><b>Метод сверки</b> — тот же, что уже задан <span class="m">docs/IMPROVEMENTS.md</span> (таблица «что взято из существующих проектов»), только источник сравнения — dsh, а не hermes-memory.</li>
+        <li>Дальше — карта слоёв (02), пять рецептов (03), находка в коде (04), новая идея (05), что переносить дословно (06), чек-лист (07).</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="foot"><span>docs/DSH_HARNESS_MIGRATION.md</span><span>PDF: DeepSeek Harness, ред. 3, 19.08.2026</span></div>
+</section></div>
+
+<!-- ================= Слайд 2. Карта слоёв ================= -->
+<div class="slidebox"><section class="slide">
+  <div class="top"><span>Plata Risk Copilot · Перенос паттернов DeepSeek Harness</span><span class="no">02 / 07</span></div>
+  <h1>Карта: восемь ключевых слоёв dsh против того, что уже стоит</h1>
+  <p class="lede">Полная карта — 14 слоёв, в <span class="m">docs/DSH_HARNESS_MIGRATION.md</span> §1. Здесь — те, где вердикт не тривиален.</p>
+
+  <table class="map">
+    <tr><th>Слой dsh</th><th style="width:168px">Статус</th><th>Что в plata</th></tr>
+    <tr><td class="layer">Модель</td><td class="stat"><span class="chip pass">сильнее</span></td><td class="why">Cortex-модель governed <span class="m">CORTEX_MODELS_ALLOWLIST</span> и cross-region — не строка конфига, а параметр аккаунта</td></tr>
+    <tr><td class="layer">Реестр инструментов</td><td class="stat"><span class="chip pass">1:1</span></td><td class="why"><span class="m">cor_metrics</span> / <span class="m">risk_docs</span> / <span class="m">sql_exec</span> — Definition/Provider/Consumer нативно, без строки кода вне Snowflake</td></tr>
+    <tr><td class="layer">Sandbox для shell</td><td class="stat"><span class="chip fail">не переносить</span></td><td class="why">Нечего песочнить — bash-инструмента у агента нет вообще</td></tr>
+    <tr><td class="layer">Policy-as-code</td><td class="stat"><span class="chip warn">частично</span></td><td class="why"><span class="m">LLM_AGENT_RO</span> / <span class="m">COPILOT_WRITER</span> — граница на уровне права, но контроль детективный → слайд 04</td></tr>
+    <tr><td class="layer">Сессии / Trajectory</td><td class="stat"><span class="chip gap">разрыв</span></td><td class="why"><span class="m">AGENT_RUN_LOG</span> + Langfuse + транскрипт — три канала, не единый поток → слайд 05</td></tr>
+    <tr><td class="layer">Skills / промпт</td><td class="stat"><span class="chip pass">сильнее</span></td><td class="why">Контекст-слой — версионируемые данные под dbt-тестами, не файл-каталог</td></tr>
+    <tr><td class="layer">LLM-fallback</td><td class="stat"><span class="chip fail">не переносить</span></td><td class="why">Единственный governed путь инференса — резидентность важнее отказоустойчивости</td></tr>
+    <tr><td class="layer">Способы запуска</td><td class="stat"><span class="chip pass">тот же принцип</span></td><td class="why">Одна точка входа <span class="m">api.py</span> уже обслуживает несколько поверхностей — Consumer не зависит от рантайма</td></tr>
+  </table>
+
+  <div class="foot"><span>Полная карта — 14 строк: docs/DSH_HARNESS_MIGRATION.md §1</span><span>agent-service/README.md · agent-service/app/*.py</span></div>
+</section></div>
+
+<!-- ================= Слайд 3. Пять рецептов ================= -->
+<div class="slidebox"><section class="slide">
+  <div class="top"><span>Plata Risk Copilot · Перенос паттернов DeepSeek Harness</span><span class="no">03 / 07</span></div>
+  <h1>Пять рецептов dsh — что валидно для governed read-агента</h1>
+  <p class="lede">Каждый рецепт из документа dsh — с вердиктом и одной строкой причины.</p>
+
+  <table class="map">
+    <tr><th style="width:280px">Рецепт</th><th style="width:150px">Вердикт</th><th>Почему</th></tr>
+    <tr><td class="layer">1 · Провайдер модели с fallback</td><td class="stat"><span class="chip fail">не переносить</span></td><td class="why">Сломал бы governed allowlist и резидентность инференса — решение владельца данных, не техника</td></tr>
+    <tr><td class="layer">2 · Песочница вместо approval</td><td class="stat"><span class="chip fail">не переносить</span></td><td class="why">Нечего песочнить: bash-инструмента у агента нет</td></tr>
+    <tr><td class="layer">3 · Хранилище сессий в pgvector</td><td class="stat"><span class="chip gap">по духу, не буквально</span></td><td class="why">Векторный слой уже сознательно отменён в пользу Cortex Search — дух рецепта закрывается иначе → слайд 05</td></tr>
+    <tr><td class="layer">4 · Политика вместо диалога</td><td class="stat"><span class="chip warn">частично сделано</span></td><td class="why">Роль БД — это и есть обрыв цепочки, только детективный, не превентивный → слайд 04</td></tr>
+    <tr><td class="layer">5 · Свой инструмент поверх API</td><td class="stat"><span class="chip pass">уже сделано</span></td><td class="why">Та же дисциплина (схема до вызова, ключ не в контексте, вызов логируется), только через <span class="m">CREATE AGENT</span></td></tr>
+  </table>
+
+  <div class="callout" style="margin-top:20px"><span class="h">Итог по рецептам</span>Один уже реализован нативно, один частично, три — осознанный отказ с конкретной причиной, не «не успели».</div>
+
+  <div class="foot"><span>docs/DSH_HARNESS_MIGRATION.md §2</span><span>agent-service/app/copilot.py</span></div>
+</section></div>
+
+<!-- ================= Слайд 4. Находка: детективный vs превентивный ================= -->
+<div class="slidebox"><section class="slide">
+  <div class="top"><span>Plata Risk Copilot · Перенос паттернов DeepSeek Harness</span><span class="no">04 / 07</span></div>
+  <h1>Находка при чтении кода: контроль после факта, не до</h1>
+  <p class="lede"><span class="m">lint_sql()</span> в <span class="m">copilot.py:92-124</span> проверяет SQL, которое агент <b>уже вернул</b> — вызывается после <span class="m">DATA_AGENT_RUN</span> (<span class="m">copilot.py:144</span>), против обязательных фильтров <span class="m">TABLE_CARDS.MANDATORY_FILTERS</span>.</p>
+
+  <div class="cols c2w">
+    <div>
+      <p class="eyebrow">Где стоит контроль — plata против рецепта 4 dsh</p>
+      <div class="timeline">
+        <div class="tl-step"><div class="rail"></div><div class="dot"></div><div class="lbl">Вопрос</div><div class="sub">в Telegram / API</div></div>
+        <div class="tl-step"><div class="rail"></div><div class="dot"></div><div class="lbl">DATA_AGENT_RUN</div><div class="sub">SQL уже исполняется</div></div>
+        <div class="tl-step after"><div class="rail"></div><div class="dot"></div><div class="lbl">lint_sql()</div><div class="sub">находка — постфактум</div></div>
+        <div class="tl-step after"><div class="rail"></div><div class="dot"></div><div class="lbl">Ответ + находка</div><div class="sub">в чат / eval_agent.py</div></div>
+      </div>
+      <p style="font-size:13.5px; color:var(--ink-2); line-height:1.5; margin:16px 0 0">dsh (рецепт 4): слушатель-политика обрывает цепочку <b>до</b> <span class="m">next()</span> — эффекта не происходит вовсе. У plata эквивалента этому шагу нет: превентивная граница — право роли, назначенное заранее, а не перехват конкретного запроса.</p>
+    </div>
+    <div>
+      <div class="callout"><span class="h">Почему это, вероятно, нормально</span>Роль <span class="m">LLM_AGENT_RO</span> — только чтение. Цена пропущенного фильтра — неполный ответ в чате, не порча и не утечка данных. Превентивный контроль здесь не размен на скорость, а лишний слой поверх уже достаточной границы.</div>
+      <div class="callout"><span class="h">Но выбор нигде не проговорён</span><span class="m">agent-service/README.md</span> описывает <span class="m">pitfall_check</span> как защиту; на деле <span class="m">docs/IMPROVEMENTS.md:101</span> фиксирует, что это «линт по карточкам вместо pitfall_check» — более слабый механизм тихо занял место замысла.</div>
+      <div class="callout"><span class="h">Действие</span>Одна строка в докстринге <span class="m">lint_sql</span> или в README: «детективный контроль, не превентивный; превентивная граница — право роли». Снимает риск неверного толкования лога линта как гарантии.</div>
+    </div>
+  </div>
+
+  <div class="foot"><span>agent-service/app/copilot.py:92-161</span><span>docs/DSH_HARNESS_MIGRATION.md §3</span></div>
+</section></div>
+
+<!-- ================= Слайд 5. Свежий взгляд ================= -->
+<div class="slidebox"><section class="slide">
+  <div class="top"><span>Plata Risk Copilot · Перенос паттернов DeepSeek Harness</span><span class="no">05 / 07</span></div>
+  <h1>Свежий взгляд: Trajectory через Cortex Search, не pgvector</h1>
+  <p class="lede">Единственный настоящий разрыв из карты (слайд 02) — у dsh есть append-only Trajectory («спрашивали ли уже что-то похожее»), у plata три несвязанных канала. Буквальный перенос (pgvector) — шаг назад: этот выбор уже отменён. Дух рецепта закрывается тем, что уже обкатано на <span class="m">risk_docs</span>.</p>
+
+  <div class="cols c2w">
+    <div class="steps">
+      <div class="step"><div class="no">1</div><div class="body"><b>Данные уже пишутся.</b> Каждый прогон кладёт вопрос и ответ в <span class="m">AGENT_RUN_LOG</span> (<span class="m">copilot.py:152-159</span>) — новых источников не нужно.</div></div>
+      <div class="step"><div class="no">2</div><div class="body"><b>Индексировать тем же механизмом, что <span class="m">risk_docs</span>.</b> <span class="m">CORTEX SEARCH SERVICE CS_AGENT_RUNS</span> на <span class="m">question</span>/<span class="m">response</span>, <span class="m">TARGET_LAG '1 day'</span> — тот же <span class="m">TASK</span>, что уже в очереди для ночного dbt.</div></div>
+      <div class="step"><div class="no">3</div><div class="body"><b>Зарегистрировать 4-й инструмент</b> <span class="m">similar_past_runs</span> — та же дисциплина рецепта 5 (слайд 03): схема до вызова, вызов логируется, тот же периметр.</div></div>
+      <div class="step"><div class="no">4</div><div class="body"><b>Расширить <span class="m">eval_agent.py</span>.</b> Сравнивать новый ответ с семантически близким прошлым прогоном — сигнал дрейфа без буквального replay-на-другой-модели из dsh.</div></div>
+    </div>
+    <div>
+      <div class="panel">
+        <p class="eyebrow">Что это даёт</p>
+        <ul class="tight">
+          <li>Повторяющиеся вопросы — быстрее и дешевле: прямое снижение стоимости, которую сейчас видно в Langfuse ($0.31 на вопрос).</li>
+          <li>Ноль новых компонент — Cortex Search уже обкатан на 86 чанках <span class="m">risk_docs</span>.</li>
+          <li>Данные не выходят за периметр: это чтение уже залогированного, не новая труба наружу.</li>
+        </ul>
+      </div>
+      <p style="font-size:13px; color:var(--ink-3); line-height:1.5; margin:14px 0 0">Нет в очереди ни <span class="m">docs/IMPROVEMENTS.md</span>, ни <span class="m">docs/SNOWFLAKE_NATIVE_FIT.md</span> — делать после того, как снят baseline (слайд 07, шаг 1): иначе эффект не с чем сравнивать.</p>
+    </div>
+  </div>
+
+  <div class="foot"><span>docs/DSH_HARNESS_MIGRATION.md §4</span><span>docs/SNOWFLAKE_NATIVE_FIT.md:37</span></div>
+</section></div>
+
+<!-- ================= Слайд 6. Дословный перенос vs явный отказ ================= -->
+<div class="slidebox"><section class="slide">
+  <div class="top"><span>Plata Risk Copilot · Перенос паттернов DeepSeek Harness</span><span class="no">06 / 07</span></div>
+  <h1>Что переносится дословно — и что закрыто явным отказом</h1>
+  <p class="lede">Симметрия важна не меньше самого переноса: список отказов такой же осознанный, как список переносов, и опирается на решения, уже принятые в <span class="m">docs/IMPROVEMENTS.md</span>.</p>
+
+  <div class="twocol-lists">
+    <div class="listcard">
+      <div class="hd"><span class="chip pass">переносится</span><span class="t">Дисциплина, не код</span></div>
+      <ul>
+        <li><b>«Наблюдаемость до функциональности»</b> — уже соблюдено на практике: трейсинг раньше ставки стоимости, лог прогонов раньше жёсткой политики. Применить и к слайду 05: сначала индекс на чтение, потом — как инструмент агента.</li>
+        <li><b>Бенчмарк-принцип</b> («разница = вклад модели, а не обвязки») — прямое совпадение с уже открытым приоритетом №2 в <span class="m">docs/IMPROVEMENTS.md</span>: снять baseline <span class="m">eval_agent.py</span>.</li>
+        <li><b>Рецепт 5 целиком</b> — применить к <span class="m">similar_past_runs</span> так же, как уже применено к трём существующим инструментам.</li>
+      </ul>
+    </div>
+    <div class="listcard">
+      <div class="hd"><span class="chip fail">не переносится</span><span class="t">Решения, не долг</span></div>
+      <ul>
+        <li><b>Sandbox для bash</b> — «не даём агенту право записи ни под каким видом» (<span class="m">docs/IMPROVEMENTS.md:139</span>).</li>
+        <li><b>LLM-fallback</b> — сломал бы governed model allowlist и резидентность инференса.</li>
+        <li><b>pgvector буквально</b> — уже отменён решением, не долгом.</li>
+        <li><b>Skills-каталог / инъекция промпта</b> — версионируемые данные под dbt-тестами сильнее файлового каталога.</li>
+        <li><b>Четыре режима и три способа запуска dsh</b> — нет режимов у read-only governed контура.</li>
+        <li><b>Свой MCP+OAuth-шим</b> — штатный MCP-сервер аккаунта уже есть, своя обвязка — поверхность без выгоды.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="foot"><span>docs/DSH_HARNESS_MIGRATION.md §5–6</span><span>docs/IMPROVEMENTS.md — «сознательно не делаем»</span></div>
+</section></div>
+
+<!-- ================= Слайд 7. Чек-лист действий ================= -->
+<div class="slidebox"><section class="slide">
+  <div class="top"><span>Plata Risk Copilot · Перенос паттернов DeepSeek Harness</span><span class="no">07 / 07</span></div>
+  <h1>Чек-лист: четыре шага, в порядке зависимостей</h1>
+  <p class="lede">Порядок не произвольный — шаг 3 без шага 1 не с чем сравнивать, шаг 2 ничего не меняет в поведении, но снимает риск неверного прочтения.</p>
+
+  <div class="cols c2">
+    <div class="steps">
+      <div class="step"><div class="no">1</div><div class="body"><b>Снять baseline <span class="m">eval_agent.py --save</span>.</b> Уже приоритет №2 в <span class="m">docs/IMPROVEMENTS.md</span> — сверка с dsh (слайд 03) только подтверждает порядок, не добавляет работы.</div></div>
+      <div class="step"><div class="no">2</div><div class="body"><b>Одна строка в <span class="m">copilot.py</span> / README.</b> <span class="m">lint_sql</span> — детективный контроль, не превентивный (слайд 04). Ноль изменений в поведении.</div></div>
+      <div class="step"><div class="no">3</div><div class="body"><b>Прототип <span class="m">CS_AGENT_RUNS</span> + инструмент <span class="m">similar_past_runs</span></b> (слайд 05) — после того как baseline снят, той же дисциплиной, что три существующих инструмента.</div></div>
+      <div class="step"><div class="no">4</div><div class="body"><b>Ничего из списка отказов (слайд 06) не внедрять.</b> Решения приняты — дублировать незачем.</div></div>
+    </div>
+    <div class="panel">
+      <p class="eyebrow">Зависимости шагов</p>
+      <div class="flow">
+        <div class="line"><span class="n hl">1 · baseline</span><span class="arrow">→</span><span class="n">3 · similar_past_runs</span></div>
+        <div class="sub" style="margin-bottom:14px">без базы регресс не с чем сравнивать</div>
+        <div class="line"><span class="n">2 · докстринг</span><span class="sub" style="padding-left:10px">независим, делается когда угодно</span></div>
+        <div class="line" style="margin-bottom:0"><span class="n x">4 · sandbox / fallback / pgvector</span><span class="sub" style="padding-left:10px">не начинать</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot"><span>docs/DSH_HARNESS_MIGRATION.md §7</span><span>полный документ — docs/DSH_HARNESS_MIGRATION.md</span></div>
+</section></div>
+
+</div>
+
+<script>
+  (function () {
+    function fit() {
+      document.querySelectorAll('.slidebox').forEach(function (b) {
+        var s = Math.min(1, b.clientWidth / 1280);
+        var slide = b.querySelector('.slide');
+        slide.style.setProperty('--s', s);
+        b.style.height = (720 * s) + 'px';
+      });
+    }
+    window.addEventListener('resize', fit);
+    fit();
+  })();
+</script>
+</body>
+</html>

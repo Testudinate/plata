@@ -1,0 +1,541 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Risk Data Governance Lead — Test Assignment Deck</title>
+<style>
+  @page { size: 297mm 167mm; margin: 0; }
+  html { font-size: 11pt; }
+  body {
+    font-family: "Liberation Sans", "DejaVu Sans", sans-serif;
+    color: #1a1a1a; line-height: 1.32; margin: 0;
+  }
+  .slide {
+    width: 297mm; height: 167mm; box-sizing: border-box;
+    padding: 11mm 13mm 9mm 13mm; break-after: page;
+    position: relative; overflow: hidden; background: #fff;
+  }
+  .slide:last-child { break-after: auto; }
+  .eyebrow {
+    font-size: 8.4pt; letter-spacing: 1.1pt; text-transform: uppercase;
+    color: #8a9bad; font-weight: 700; margin-bottom: 1.5mm;
+  }
+  h1 { font-size: 27pt; margin: 0 0 3mm 0; letter-spacing: -0.5pt; color: #1f4e79; }
+  h2 {
+    font-size: 16pt; margin: 0 0 1mm 0; color: #1f4e79; letter-spacing: -0.2pt;
+  }
+  .lede { font-size: 10.4pt; color: #333; margin: 0 0 3.5mm 0; max-width: 250mm; }
+  .lede b { color: #1a1a1a; }
+  p { margin: 0 0 2mm 0; }
+  .cols { display: flex; gap: 7mm; }
+  .cols > div { flex: 1; }
+  .c40 { flex: 0 0 40% !important; }
+  .c55 { flex: 0 0 55% !important; }
+  h3 {
+    font-size: 9.6pt; margin: 0 0 1.5mm 0; color: #1f4e79;
+    text-transform: uppercase; letter-spacing: 0.5pt;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 8.6pt; margin: 0 0 2.5mm 0; }
+  th {
+    background: #eef3f8; text-align: left; padding: 1.3mm 1.8mm;
+    border-bottom: 1pt solid #bfd0e0; font-weight: 600; font-size: 8.2pt;
+  }
+  td { padding: 1.3mm 1.8mm; border-bottom: 0.5pt solid #dde3ea; vertical-align: top; }
+  td.num, th.num { text-align: right; white-space: nowrap; }
+  ul { margin: 0 0 2.5mm 0; padding-left: 4.5mm; }
+  li { margin-bottom: 1.1mm; font-size: 9.2pt; }
+  code { font-family: "DejaVu Sans Mono", monospace; font-size: 8.4pt; background: #f2f4f6; padding: 0.2mm 0.7mm; }
+  .kpi { display: flex; gap: 3mm; margin: 4mm 0; }
+  .kpi div {
+    flex: 1; border: 0.8pt solid #cfd8e2; border-radius: 1.5mm;
+    padding: 3mm 2mm; text-align: center;
+  }
+  .kpi .v { font-size: 17pt; font-weight: 700; color: #1f4e79; display: block; line-height: 1.1; }
+  .kpi .l { font-size: 7.6pt; color: #555; display: block; margin-top: 1mm; }
+  .note {
+    background: #f7f9fb; border-left: 2.5pt solid #1f4e79;
+    padding: 2.2mm 3mm; margin: 0 0 2.5mm 0; font-size: 8.8pt;
+  }
+  .note b { color: #1f4e79; }
+  .flag {
+    background: #fbf6f6; border-left: 2.5pt solid #8a1c1c;
+    padding: 2.2mm 3mm; margin: 0 0 2.5mm 0; font-size: 8.8pt;
+  }
+  .flag b { color: #8a1c1c; }
+  .big { font-size: 40pt; font-weight: 700; color: #1f4e79; line-height: 1; letter-spacing: -1.5pt; }
+  .big-sub { font-size: 9.4pt; color: #555; margin-top: 1.5mm; }
+  .foot {
+    position: absolute; bottom: 6mm; left: 13mm; right: 13mm;
+    border-top: 0.5pt solid #dde3ea; padding-top: 1.6mm;
+    font-size: 7.6pt; color: #8a9bad; display: flex; justify-content: space-between;
+  }
+  /* Плотная вёрстка для слайдов, где содержание не влезает в штатном кегле */
+  .dense .lede { font-size: 9.6pt; margin-bottom: 2.5mm; }
+  .dense table { font-size: 8pt; margin-bottom: 1.5mm; }
+  .dense th { padding: 0.9mm 1.4mm; font-size: 7.8pt; }
+  .dense td { padding: 0.9mm 1.4mm; }
+  .dense ul { margin-bottom: 1.6mm; }
+  .dense li { font-size: 8.5pt; margin-bottom: 0.6mm; }
+  .dense p { font-size: 8.5pt !important; margin-bottom: 1.5mm; }
+  .dense .note, .dense .flag { font-size: 8.1pt; padding: 1.7mm 2.4mm; margin-bottom: 1.6mm; }
+  .dense h3 { font-size: 9pt; margin-bottom: 1.2mm; }
+  .dense code { font-size: 7.8pt; }
+  .ok { color: #1d6b3a; font-weight: 700; }
+  .no { color: #8a1c1c; font-weight: 700; }
+  .mid { color: #9a6b12; font-weight: 700; }
+  strong { font-weight: 600; }
+</style>
+</head>
+<body>
+
+<!-- 1 -->
+<div class="slide">
+  <div class="eyebrow">Plata · Group IRM · Parts 1–5</div>
+  <h1>Risk Data Governance Lead</h1>
+  <p class="lede"><b>The appendices describe data I do not have.</b> Rather than describing what I
+  would hypothetically do, I rebuilt the landscape in Snowflake and measured it — same grains, same
+  sign conventions, same pitfalls — then built the governance layer on top: catalog, canonical
+  metric layer, DQ monitoring, change registries, an LLM context layer and a working agent.
+  <b>Every number in this deck is a measurement.</b></p>
+
+  <div class="kpi">
+    <div><span class="v">14.62%</span><span class="l">canonical COR<br>for April 2026</span></div>
+    <div><span class="v">3.24 pp</span><span class="l">spread across the<br>three calculations</span></div>
+    <div><span class="v">26</span><span class="l">automated checks,<br>all passing</span></div>
+    <div><span class="v">3.4k</span><span class="l">tokens — the whole<br>agent context layer</span></div>
+    <div><span class="v">23</span><span class="l">agent questions run<br>and scored</span></div>
+    <div><span class="v">2.67</span><span class="l">Snowflake credits<br>— about $8</span></div>
+  </div>
+
+  <div class="cols">
+    <div>
+      <div class="note" style="margin-bottom:0">
+      <b>What is proof and what is proposal.</b> The sandbox is a <em>verification method</em>, not
+      the proposal. What I would put into Plata in the first 90 days is deliberately smaller than
+      what I built to check it: four registry tables, the checks that matter on tier1–tier2, one
+      context layer — plus an explicit list of what is <b>not</b> a priority. At $8, checking an
+      assertion is cheaper than debating it.
+      </div>
+    </div>
+    <div>
+      <div class="note" style="margin-bottom:0">
+      <b>How to read this.</b> Nine slides carry the argument. Every claim behind them is
+      verifiable by a single query, and the queries are in the full response
+      (<code>test-assignment-answer-en.pdf</code>, 20 pp.) together with a separate review of the
+      source material: <b>20 findings across Appendices A–I, 8 of them critical</b>, each cited
+      with file and line.
+      </div>
+    </div>
+  </div>
+
+  <div class="foot"><span>Sandbox: 10 databases · 23 schemas · 59 tables · 15 views · 8.1M rows</span><span>1 / 9</span></div>
+</div>
+
+<!-- 2 -->
+<div class="slide">
+  <div class="eyebrow">Part 1 · Data landscape</div>
+  <h2>The governance risks are already written down — as prose</h2>
+  <p class="lede">Read out of Appendices A–I and nowhere else. Every row is backed by a quote with
+  a line number (<code>C:7</code> = Appendix C, line 7).</p>
+
+  <table>
+  <tr><th style="width:4%">#</th><th style="width:20%">Risk</th><th style="width:22%">DMBoK discipline</th><th>What the appendices actually say</th></tr>
+  <tr><td>R1</td><td><b>Metric with no canon</b></td><td>Data Quality Mgmt · Metadata</td><td>The glossary defines COR and admits "Three methodologies exist" (<code>E:13</code>). No formula is marked primary; the definition has no owner</td></tr>
+  <tr><td>R2</td><td><b>Sign convention in prose</b></td><td>Data Architecture · DQM</td><td>"Different tables use different signs… <b>silently</b> produces incorrect results" (<code>C:7</code>) — a rule across 5+ tables that exists only as a paragraph</td></tr>
+  <tr><td>R3</td><td><b>Filter column differs by schema</b></td><td>Data Architecture · Reference Data</td><td><code>dm.*</code> filters on <code>product_risks</code>, <code>tableau.*</code> on <code>account_type</code> (<code>A:42</code>) — both accept the value <code>'CC'</code></td></tr>
+  <tr><td>R4</td><td><b>Key rule duplicated three times</b></td><td>Metadata · DQM</td><td><code>statement_num >= 2</code> and <code>× 12</code> recorded independently in three appendices (<code>C:99</code>, <code>D:27</code>, <code>F:53</code>). Guaranteed drift at the first edit</td></tr>
+  <tr><td>R5<br>R6</td><td><b>Change with no trace<br>and no version</b></td><td>Change Management</td><td>A table "was dropped in a recent refactor" — no date, no author, no impact list (<code>G:47</code>). Gen5v1 "materially shifted EL LT" (<code>G:71</code>): schema unchanged, nothing failed, every number now means something else</td></tr>
+  <tr><td>R8</td><td><b>SLA with no addressee</b></td><td>Data Governance · DQM</td><td>Expected freshness is tabulated (<code>B:70</code>), but not who owns the number, who is woken on a breach, or what counts as one. <b>Ownership is not mentioned once in nine appendices</b></td></tr>
+  <tr><td>R10</td><td><b>PII as routine enrichment</b></td><td>Data Security · AI readiness</td><td>A join to <code>ods.user_mgmt.USER_DATA</code> is offered as an ordinary pattern: "Add demographics (gender, age, state)" (<code>F:29</code>) — no classification, no role limit, and an LLM agent is meant to work off these same appendices</td></tr>
+  </table>
+
+  <div class="flag" style="margin-bottom:0">
+  <b>The expensive class is not the query that fails — it is the query that runs and lies.</b>
+  Six of the eleven risks (R1–R4, R6, R9) return a plausible wrong number with no execution error
+  whatsoever. The appendices warn about this twice with the word "silently", and both times the
+  warning is addressed to the reader's memory rather than to a check.
+  </div>
+
+  <div class="foot"><span>Full risk register R1–R11 with the "after" state: response §1.1 and §1.1-bis</span><span>2 / 9</span></div>
+</div>
+
+<!-- 3 -->
+<div class="slide">
+  <div class="eyebrow">Part 1 · Enforcement and ownership</div>
+  <h2>A rule that cannot be skipped, instead of a rule that must be remembered</h2>
+
+  <div class="cols">
+    <div class="c55">
+      <h3>How the drift is stopped</h3>
+      <table>
+      <tr><th style="width:26%">Mechanism</th><th>What it is</th></tr>
+      <tr><td><b>M1</b> Do not rename — translate</td><td>A mass rename across 20+ schemas breaks Tableau and never starts. Instead a name-resolution layer: old names survive but stop being a fork in the road. <b>Zero migrations</b></td></tr>
+      <tr><td><b>M2</b> Standard applies at the entry point</td><td>Mandatory for new objects; existing ones are registered as they are, with an alias. A standard that demands rewriting the past dies in month one</td></tr>
+      <tr><td><b>M3</b> A convention becomes a predicate</td><td>Each rule is stored as a row with a ready SQL condition: <b>12 sign rules</b> of the form <code>COR_PRNP &lt;= 0</code>, each citing its source appendix</td></tr>
+      <tr><td><b>M4</b> A gate at the entrance to the layer</td><td>No object without a card (grain, filter column, sign), a named owner and steward, an SLA with an action, and a passing check run</td></tr>
+      <tr><td><b>M5</b> Drift is measured, not declared</td><td>A DDL snapshot is diffed against the change log. The metric is not "we introduced a standard" but "how many changes shipped unannounced"</td></tr>
+      </table>
+    </div>
+    <div>
+      <h3>Ownership = three separable duties</h3>
+      <table>
+      <tr><th style="width:32%">Role</th><th>Accountable for</th></tr>
+      <tr><td><b>Data owner</b></td><td>What the number <em>means</em>; signs off a change to the definition</td></tr>
+      <tr><td><b>Data steward</b></td><td>Operational quality; receives the alert when a check fails</td></tr>
+      <tr><td><b>Technical owner</b></td><td>The pipeline and the load SLA</td></tr>
+      </table>
+      <p style="font-size:9pt;margin-bottom:2mm"><b>The owner is whoever bears the consequences of a
+      wrong number</b>, not whoever wrote the pipeline. Operationally that is four obligations, each
+      answerable by query: a signature under the definition · a named duty with a named action ·
+      a threshold in the right calendar · an obligation to give notice.</p>
+      <p style="font-size:9pt;margin-bottom:0"><b>Reality test:</b> who signed the definition, who
+      gets woken and what they do, who had to be told in advance and how many days ahead. While any
+      of the three is answered by a phone call, ownership exists on paper only.</p>
+    </div>
+  </div>
+
+  <div class="flag" style="margin-bottom:0">
+  <b>Why a predicate and not a policy document — I tripped over this myself.</b> The first semantic
+  model for Cortex described the mandatory filter <code>statement_num >= 2</code> in a
+  <em>comment</em> on the metric. A natural-language question returned <b>14.42%</b> instead of the
+  canonical <b>14.62%</b>. Once the filter was compiled into the aggregate, the discrepancy went to
+  zero. A comment enforces nothing — and a review policy without an automatic check is the same
+  comment.
+  </div>
+
+  <div class="foot"><span>Evidence: 26 checks in 15 categories, none failing · ownership 25 of 25 on the risk layer</span><span>3 / 9</span></div>
+</div>
+
+<!-- 4 -->
+<div class="slide">
+  <div class="eyebrow">Part 2 · Metric governance</div>
+  <h2>"What is our actual COR for April?"</h2>
+
+  <div class="cols">
+    <div class="c40">
+      <div class="big">14.62%</div>
+      <p class="big-sub">annualised, credit cards, under the canonical definition — not because it
+      is the nicest number, but because <b>the grain of the calculation matches the event the metric
+      is defined on</b>.</p>
+      <table style="margin-top:3mm">
+      <tr><th style="width:38%">Canon <code>COR_PCT_CC v1.0</code></th><th>Value</th></tr>
+      <tr><td>Grain</td><td>account × statement</td></tr>
+      <tr><td>Model</td><td>Gen3, full total</td></tr>
+      <tr><td>Mandatory filter</td><td><code>product_risks = 'CC'</code><br><code>AND statement_num >= 2</code></td></tr>
+      <tr><td>Denominator</td><td><code>SUM(avg_balance_prnp_net)</code></td></tr>
+      <tr><td>Annualisation</td><td>× 12</td></tr>
+      </table>
+      <p style="font-size:8.8pt;margin-bottom:0">Provisions move when a payment is missed, and
+      payments are attached to a statement. A daily snapshot answers a different question and mixes
+      calendar effects into a credit metric.</p>
+    </div>
+    <div>
+      <h3>The bridge: where the other two numbers come from</h3>
+      <p style="font-size:9pt">Each step changes exactly one methodological decision and is
+      recomputed from the data, so <b>the residual is zero by construction</b>.</p>
+      <table>
+      <tr><th>Step (April 2026, product CC)</th><th class="num">Contribution</th><th class="num">Running</th></tr>
+      <tr><td><b>Canon</b> — statement, Gen3, <code>stmt ≥ 2</code>, ×12</td><td class="num">—</td><td class="num"><b>14.62%</b></td></tr>
+      <tr><td><code>statement_num ≥ 2</code> filter removed</td><td class="num">−0.20</td><td class="num">14.42%</td></tr>
+      <tr><td>grain: statement → daily</td><td class="num">−2.14</td><td class="num">12.28%</td></tr>
+      <tr><td>0-DPD bucket removed from the numerator</td><td class="num">−0.53</td><td class="num">11.75%</td></tr>
+      <tr><td>annualisation ×12 → ×365</td><td class="num">+0.16</td><td class="num">11.92%</td></tr>
+      <tr><td colspan="2"><b>= Portfolio Monitoring</b></td><td class="num"><b>11.92%</b></td></tr>
+      <tr><td>model generation Gen3 → Gen2</td><td class="num">−0.54</td><td class="num">11.38%</td></tr>
+      <tr><td colspan="2"><b>= Finance</b></td><td class="num"><b>11.38%</b></td></tr>
+      </table>
+      <div class="flag" style="margin-bottom:0">
+      <b>Two findings that reframe the task.</b> The spread has <b>no constant sign</b>: in April the
+      canon is the highest of the three, in March the lowest (Feb 0.74 pp · Mar 2.30 · Apr 3.24 ·
+      Jun 4.37). So "Finance always runs two points lower, just add it back" is impossible — one
+      canon is required, not a correction factor. And the famous pitfall is third-order: the
+      <code>statement_num</code> filter contributes 0.05–0.24 pp, while the choice of grain
+      contributes 2.1–2.7. The warning is correct; the documentation's priority is not.
+      </div>
+    </div>
+  </div>
+
+  <div class="foot"><span>Do not delete the legacy calculations — deprecate them. Deleting migrates no one; it moves the calculation into Excel</span><span>4 / 9</span></div>
+</div>
+
+<!-- 5 -->
+<div class="slide">
+  <div class="eyebrow">Part 2 · Drift detection against the DQM ladder</div>
+  <h2>Three teams will drift again — the question is who notices first</h2>
+  <p class="lede">The detector does not check whether a number is "right": all three are right inside
+  their own methodology. It catches three <b>events</b>.</p>
+
+  <div class="cols">
+    <div class="c55">
+      <table>
+      <tr><th style="width:6%">#</th><th style="width:34%">Signal</th><th>Why it is built this way</th></tr>
+      <tr><td><b>D1</b></td><td>The bridge residual stopped being zero</td><td>The bridge converges by construction, so a non-zero residual is the only signal that catches an <b>unknown unknown</b>: a calculation changed quietly, a new branch appeared, the data moved</td></tr>
+      <tr><td><b>D2</b></td><td>A step's contribution left its historical corridor</td><td>The grain step ranges from −7.1 to +8.1 pp across 24 months — that is normal, not broken. The threshold is built from each step's own history, or the alert fires on healthy seasonality</td></tr>
+      <tr><td><b>D3</b></td><td>A team's published number diverged from its registered formula</td><td>Recomputed from <code>METRIC_DEFINITIONS</code> and compared with what the team publishes. The only check aimed at <b>people</b> rather than data</td></tr>
+      </table>
+      <div class="note" style="margin-bottom:0">
+      <b>Why the sign check is an aggregate, not a row check.</b> Individual positive COR values are
+      legitimate — that is a provision release when an account cures. A row-level rule would fire on
+      every healthy portfolio and be switched off in week one. An alert that gets ignored is worse
+      than no alert, and the same principle sets the D2 thresholds.
+      </div>
+    </div>
+    <div>
+      <h3>Where this sits on the DQM ladder</h3>
+      <table>
+      <tr><th style="width:34%">Rung</th><th>State in the sandbox</th></tr>
+      <tr><td><b>Basic → Defined</b><br>native metrics on critical tables</td><td>12 attachments on 3 tables, daily schedule</td></tr>
+      <tr><td><b>Defined → Controlled</b><br>checks on <em>meaning</em>, not form</td><td>2 custom quality functions: calendar violation and sign inversion</td></tr>
+      <tr><td><b>Controlled → Continuing</b><br>traffic light on seven dimensions</td><td>22 checks: <span class="ok">21 green</span>, <span class="mid">1 yellow</span></td></tr>
+      </table>
+      <p style="font-size:9pt"><b>D1–D3 themselves:</b> Defined is fully closed — the canon is
+      recorded, all three formulas registered with a status, the bridge runs on demand. Controlled is
+      partial: D1 and D2 compute on every rebuild, but thresholds and a schedule agreed with the
+      owners do not exist yet.</p>
+      <div class="flag" style="margin-bottom:0">
+      <b>The single yellow check is a real incident</b> — <code>stm_cc</code> is 9 business days
+      behind against an SLA of 5. Tellingly, I first put that delay only into the ETL log while the
+      data itself was current, and the traffic light showed all green. The monitor was measuring
+      something other than what it claimed. That is exactly the class of error that makes a DQ
+      dashboard decorative.
+      </div>
+    </div>
+  </div>
+
+  <div class="foot"><span>Continuing improvement measures the process, not the metric: time from drift to closure, share of false alerts, a disabled check is itself an incident</span><span>5 / 9</span></div>
+</div>
+
+<!-- 6 -->
+<div class="slide dense">
+  <div class="eyebrow">Part 3 · Change management</div>
+  <h2>Gen5v1 re-estimated: a data change with no schema change</h2>
+  <p class="lede">Nothing fails, no query errors — every dashboard quietly starts showing different
+  numbers, which makes it <b>more dangerous than dropping a table</b>. A drop is noticed in a minute;
+  a 35% shift in EL LT for 2025 H1 vintages is noticed a quarter later, in a variance review.</p>
+
+  <div class="cols">
+    <div class="c55">
+      <h3>Three decisions to close before doing anything</h3>
+      <table>
+      <tr><th style="width:24%">Decision</th><th>Who decides, and why them</th></tr>
+      <tr><td><b>Retrospective</b><br>closed periods or forward only</td><td>Head of IRM with Finance — monthly reporting breaks on exactly this. The consequence lands on reporting, not on modelling</td></tr>
+      <tr><td><b>Form of publication</b><br>new snapshot or overwrite</td><td>The mart owner. Here: a new <code>2026-06</code> snapshot, <code>2026-03</code> left alive. That is versioning, not "a backup just in case"</td></tr>
+      <tr><td><b>Life of the old base</b><br>until when may a consumer stay</td><td>The mart owner with the consumer. Without a date the pin is permanent and the organisation keeps two truths forever</td></tr>
+      </table>
+      <h3>Then, in order</h3>
+      <ul>
+      <li><b>Measure the shift before announcing it</b> — ×1.35 on EL LT for 2025-01…2025-06 vintages. "The model was re-estimated" without a number is useless.</li>
+      <li><b>Notify from the registry</b>, version the mart, log the change with a breaking flag and the fact of notice.</li>
+      <li><b>Keep a rollback path</b>: switching a view, not reloading data — both snapshots stay live, so rollback costs seconds. A plan that needs a restore from backup is never used.</li>
+      <li><b>Close on evidence, not on the date</b>: retire the old view once access history shows nobody is left on it. While someone still reads the previous version, truth has multiplied rather than migrated.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Impact assessment: a query, not a phone round</h3>
+      <table>
+      <tr><th style="width:36%">Consumer</th><th style="width:16%" class="num">Notice</th><th>What actually breaks it</th></tr>
+      <tr><td>CLIP decision model</td><td class="num">30 days</td><td>The EL LT shift — the model is calibrated on it</td></tr>
+      <tr><td>Monthly reporting (CUBE)</td><td class="num">20 days</td><td>Value changes on closed periods; a new snapshot is fine</td></tr>
+      <tr><td>Statement COR dashboard</td><td class="num">10 days</td><td>Any change to forecast values or grain</td></tr>
+      <tr><td>LLM agent</td><td class="num"><b>0 days</b></td><td>Column rename or drop. A change in <em>values</em> needs a context refresh, not a notice</td></tr>
+      </table>
+      <p style="font-size:9pt">The agent row matters: a human needs warning in order to rebuild a
+      report; an agent gains nothing from warning — it needs the context layer to update <b>at the
+      same moment as the data</b>.</p>
+      <table>
+      <tr><th style="width:26%">CM ladder</th><th>Implemented — from <b>Basic</b>, where you find out afterwards</th></tr>
+      <tr><td><b>Defined</b></td><td><code>CHANGE_LOG</code>, 4 records, 3 breaking</td></tr>
+      <tr><td><b>Controlled</b></td><td>impact view, versioning, parallel window, a <b>tombstone</b> instead of "object does not exist"</td></tr>
+      <tr><td><b>Continuing</b></td><td>DDL snapshots and hash reconciliation: a changed hash with no log entry is a verdict, not an opinion</td></tr>
+      </table>
+      <div class="flag" style="margin-bottom:0">
+      <b>The consumer that is not in the registry:</b> the agent's golden question set depends on the
+      model itself. After the next re-estimation its expected values go stale, and a regression drop
+      becomes indistinguishable from agent degradation. Found, openly not yet closed.
+      </div>
+    </div>
+  </div>
+
+  <div class="foot"><span>A maintained-by-hand rebuild script diverges from reality — so the DDL is generated from the live account and stored with the snapshots</span><span>6 / 9</span></div>
+</div>
+
+<!-- 7 -->
+<div class="slide dense">
+  <div class="eyebrow">Part 4 · AI readiness</div>
+  <h2>The appendices are good documentation for a human</h2>
+  <p class="lede">An agent lacks three things: <b>structure instead of prose</b> (a row it can find by
+  object name, not a sentence) · <b>term resolution</b> (the glossary says TDC is a credit card, not
+  that in a query it is <code>product_risks = 'CC'</code>) · <b>rules inside the data, not beside
+  it</b> (a mandatory filter in a document can be ignored; compiled into the metric it cannot).</p>
+
+  <div class="cols">
+    <div>
+      <h3>Built — and then actually used by an agent</h3>
+      <table>
+      <tr><th style="width:44%">Object</th><th class="num" style="width:12%">n</th><th>What it gives the agent</th></tr>
+      <tr><td>Table cards</td><td class="num">9</td><td>Grain, filter column, sign, mandatory filters, a "do not" section</td></tr>
+      <tr><td>Join graph</td><td class="num">10</td><td>The exact expression and the trap on each edge</td></tr>
+      <tr><td>Pitfalls</td><td class="num">10</td><td>Symptom, rule, executable detection query</td></tr>
+      <tr><td>Glossary</td><td class="num">17</td><td>Term → synonyms → object/column/value</td></tr>
+      <tr><td>Metric contracts</td><td class="num">4</td><td>The only sanctioned way to compute</td></tr>
+      <tr><td>Golden question set</td><td class="num">16</td><td>Regression test, expected values from the data</td></tr>
+      </table>
+      <p style="font-size:9pt;margin-bottom:2mm">The whole layer is <b>13,664 characters ≈ 3.4k
+      tokens</b> — it fits in the system prompt entire, so "will the documentation even fit" never
+      arises.</p>
+      <div class="note" style="margin-bottom:0">
+      <b>The agent in operation, not on paper.</b> <code>RISK_COPILOT</code> inside Snowflake, three
+      tools: the semantic view <code>SV_COR</code>, Cortex Search over Appendices A–I
+      (<b>86 chunks</b>, documents never leave the account), and read-only SQL under
+      <code>LLM_AGENT_RO</code>. Surfaced through Telegram behind an allowlist. A dbt project runs
+      from git (<b>PASS=11, ERROR=0</b>) whose test fails the build if the transformation layer
+      diverges from the canon by more than 0.01 pp; a daily alert watches for drift.
+      </div>
+    </div>
+    <div>
+      <h3>Scored against a plan written beforehand — 23 questions</h3>
+      <table>
+      <tr><th style="width:16%">Verdict</th><th class="num" style="width:6%">n</th><th>What it shows</th></tr>
+      <tr><td class="ok">PASS</td><td class="num">11</td><td>The governance objects hold up under an agent: the dropped table <b>redirects</b>, "give me demographics of delinquent customers" is <b>refused</b> rather than routed around, April COR comes back at 14.62% <em>with the contract named</em></td></tr>
+      <tr><td class="no">FAIL</td><td class="num">2</td><td>Business days in April: 22 against 20 — no grant on the holiday calendar, so the agent answered from arithmetic, plausibly and wrongly, with no error anywhere. Closed with a point grant</td></tr>
+      <tr><td class="mid">PARTIAL</td><td class="num">10</td><td>Consistently: right table, right derivation, right trap — but <b>could not execute</b>. The limit is in the grants, not the model, and it surfaced only because the run was scored</td></tr>
+      </table>
+      <p style="font-size:9pt;margin-bottom:2mm"><b>The score is not the deliverable — the existence
+      of a score is.</b> Without a plan and a golden set, "the agent works" is a demo.</p>
+      <h3>Trust is a product, not a sum</h3>
+      <p style="font-size:9.2pt;margin-bottom:2mm">privileges × measured correctness at a threshold ×
+      answer provenance × the ability to review what it did. <b>Zero any factor and the result is
+      zero</b>, not "partially trusted".</p>
+      <table>
+      <tr><th style="width:30%">Gap</th><th>Status</th></tr>
+      <tr><td>G1 Pass threshold</td><td><span class="ok">closed</span> — baseline captured; <code>--compare</code> fails the run on degradation, by difficulty</td></tr>
+      <tr><td>G2 Resource limits</td><td><span class="ok">closed at the service boundary</span> — 90-second sessions on a dedicated warehouse, against a role default of 48 hours</td></tr>
+      <tr><td>G3 Answer provenance</td><td><span class="mid">partial</span> — the contract is named; model snapshot and data date are not</td></tr>
+      <tr><td>G4 Trust is binary</td><td><span class="no">open</span> — analyst / reporting / regulatory need three access classes. First thing I would close in the role</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="foot"><span>Constrained by privileges, not instructions: the agent role has no grant on the ODS database at all — masking is the second line, not the first</span><span>7 / 9</span></div>
+</div>
+
+<!-- 8 -->
+<div class="slide">
+  <div class="eyebrow">Part 5 · Maturity and the 90 days</div>
+  <h2>Two dimensions first — and an explicit list of what is not a priority</h2>
+
+  <div class="cols">
+    <div class="c40">
+      <h3>Where Plata stands, on the evidence</h3>
+      <table>
+      <tr><th style="width:36%">Discipline</th><th style="width:20%">Level</th><th>Confidence</th></tr>
+      <tr><td>Data Quality Mgmt</td><td><b>Basic</b></td><td>High — freshness is tabulated, but no threshold, owner or trace of a check anywhere</td></tr>
+      <tr><td>Change Management</td><td><b>Basic</b></td><td>High — a drop described as a fact, a re-estimation as a heads-up</td></tr>
+      <tr><td>Data Catalog</td><td><b>Defined</b> by content<br><b>Basic</b> by ownership</td><td>Thin — a composite score on purpose: averaging it would hide the very attribute that is missing</td></tr>
+      <tr><td>Reference Data</td><td><b>Defined</b></td><td>Thin and indirect — only product codes are visible</td></tr>
+      </table>
+      <p style="font-size:8.8pt;margin-bottom:2mm"><b>Working definition used throughout:</b> Basic —
+      the practice lives in people's heads · Defined — the rule is written and has an owner ·
+      Controlled — compliance is checked automatically and breaches escalate to a name · Continuing —
+      the control system itself is measured.</p>
+      <div class="flag" style="margin-bottom:0">
+      <b>Not a 90-day priority, deliberately.</b> Reference Data Management (an alias reference closes
+      90% of the pain in a day) · Master Data Management for customers · replatforming or buying a
+      catalog (a tool bought before the process works preserves the absence of process) · ownership
+      coverage of tier3 (tagging forty technical tables creates the appearance of governance).
+      </div>
+    </div>
+    <div>
+      <h3>DQM and Change Management, Basic → Defined</h3>
+      <p style="font-size:9pt;margin-bottom:2mm">Not only because the assignment names them the
+      sharpest pain, but for the dependency order: <b>without DQ you cannot prove a change broke
+      something, and without change management any quality gain is rolled back by the next
+      release.</b> In parallel — the canonical metric layer: you cannot monitor the quality of a
+      metric whose definition is not fixed.</p>
+      <table>
+      <tr><th style="width:14%">Gate</th><th style="width:44%">What is done</th><th>How it is evidenced</th></tr>
+      <tr><td><b>Day 30</b></td><td>Five measurements taken; the metric canon fixed and signed; the bridge between the three calculations computed</td><td>The decomposition reproduces from data with a zero residual. Priorities explicitly confirmed <b>or revised</b></td></tr>
+      <tr><td><b>Day 60</b></td><td>Checks on every tier1 table with threshold, steward and prescribed action; statement freshness in business days; change log established</td><td>No Monday false alarms; every firing signal has an addressee</td></tr>
+      <tr><td><b>Day 90</b></td><td>Consumer registry with notice periods; schema snapshot reconciliation running automatically</td><td>No breaking change without a record and a notice; reconciliation finds nothing unlogged</td></tr>
+      </table>
+      <p style="font-size:9pt;margin-bottom:2mm"><b>What I measure in the first 30 days</b> — two of
+      the five can overturn this plan, and that is the point: how many versions of one metric are
+      actually in circulation · share of incidents found by monitoring before the user (the only one
+      that <em>cannot</em> be measured retroactively, so the incident log with a mandatory "who found
+      it" field is set up in week one) · share of schema changes that were registered · time to
+      answer a typical analyst question · agent pass rate on the golden set.</p>
+      <div class="note" style="margin-bottom:0">
+      <b>The main risk of the plan is not technical.</b> For half of the tier1 objects the technical
+      owner is <b>DWH Engineering</b> — a team that does not report to this role. The workaround is
+      built into the design: every check is constructed <b>on the risk side</b> and requires no
+      change to upstream pipelines. Control is placed where the authority is, not where the source of
+      the problem sits — otherwise the plan depends on someone else's quarterly roadmap.
+      </div>
+    </div>
+  </div>
+
+  <div class="foot"><span>An acceptance criterion without an acceptor is a self-assessment: the Head of IRM accepts against the same three gates, recorded in the registry</span><span>8 / 9</span></div>
+</div>
+
+<!-- 9 -->
+<div class="slide dense">
+  <div class="eyebrow">Part 5 · The team</div>
+  <h2>Two Data Stewards: remove work first, add work second</h2>
+  <p class="lede">The two analytics engineers are not idle capacity — a plan that adds work to a
+  saturated queue is not a plan. <b>Managing two people is a capacity decision before it is a people
+  decision.</b></p>
+
+  <div class="cols">
+    <div>
+      <h3>First two weeks: measure their time, not the data</h3>
+      <table>
+      <tr><th style="width:38%">What I measure</th><th>What decision it changes</th></tr>
+      <tr><td>Structure of incoming work — ad-hoc / extract / incident / development</td><td>If more than half is ad-hoc, the context layer moves <em>ahead</em> of DQ checks: it removes work rather than adding it</td></tr>
+      <tr><td>Repeat rate of questions</td><td>A repeated question is a documentation defect, not an analyst request. Fixed once, in the glossary or a card</td></tr>
+      <tr><td>Interrupt load</td><td>Two people cannot absorb both an ad-hoc queue and a delivery plan</td></tr>
+      <tr><td>Single points of knowledge</td><td>Bus factor is a governance risk, not an HR one. It sets the rotation</td></tr>
+      <tr><td>Where the queue actually stalls</td><td>Separates "we are slow" from "we are blocked by DWH" — only one of them is mine to fix</td></tr>
+      </table>
+      <div class="note" style="margin-bottom:0">
+      <b>The appendices predict most of the toil:</b> three COR versions mean somebody reconciles by
+      hand before every management meeting; "silently produces incorrect results" means every query
+      is re-verified by attention rather than by a check; broken cross-references mean the same
+      questions answered in chat again and again; weekend-stale means a false alarm triaged every
+      Monday. <b>Every one is toil manufactured by the absence of governance</b> — hence the
+      sequencing rule: the first delivery must give them hours back, or the second never gets built.
+      </div>
+    </div>
+    <div>
+      <h3>Split ownership, not tickets</h3>
+      <table>
+      <tr><th style="width:16%"></th><th style="width:42%">Steward 1 — marts and quality</th><th>Steward 2 — meaning and registries</th></tr>
+      <tr><td><b>Owns</b></td><td>Checks on the marts, freshness in business days, the DQ scorecard, incident duty</td><td>Metric definitions, glossary, product reference, table cards, change log, consumer registry</td></tr>
+      <tr><td><b>Day 90</b></td><td>tier1 covered; zero Monday false alarms</td><td>Canon signed; context layer extended to the full risk layer</td></tr>
+      <tr><td><b>Grows into</b></td><td>DQ engineering: predicates, dbt tests, drift invariants</td><td>Semantic and metadata layer: contracts, agent readiness</td></tr>
+      </table>
+      <p style="font-size:9pt;margin-bottom:2mm">Both are named in <code>META.OWNERSHIP</code> as
+      stewards of their own objects, with the action they take when a check fails. <b>The ownership
+      model this response proposes for data is the model I run the team on.</b> Duty rotates weekly;
+      both present at a gate at least once.</p>
+      <h3>How the experience transfers</h3>
+      <ul>
+      <li><b>Pair on the first, solo on the rest</b> — the first sign predicate together, the other eleven theirs. The teaching cost is paid once per <em>class</em> of work, not per task.</li>
+      <li><b>They author the standard, I review it</b> — one written by the lead gets complied with; one written by the steward gets defended. The naming check missing from the 26 is the first thing I hand over rather than close myself.</li>
+      <li><b>"Explain the number" duty</b> — whoever owns a definition answers the Head of Risk directly, with me in the room and not in front.</li>
+      <li><b>Review with the reason attached</b> — every rejection names the check that would have caught it. Review that only says no teaches obedience.</li>
+      </ul>
+      <div class="flag" style="margin-bottom:0">
+      <b>How I know the delegation is real:</b> share of checks authored by the stewards rather than
+      by me — near zero at day 30, above two thirds at day 90. Not delegated: the signature under the
+      canon, the right to refuse at the gate, the agent's trust threshold. Never kept: writing all
+      the checks myself — a lead who builds everything personally ends up with two executors and a
+      bus factor of one.
+      </div>
+    </div>
+  </div>
+
+  <div class="foot"><span>Full response, assumptions and the source-material review: <code>test-assignment-answer-en.pdf</code> · <code>source-review-en.pdf</code></span><span>9 / 9</span></div>
+</div>
+
+</body>
+</html>
